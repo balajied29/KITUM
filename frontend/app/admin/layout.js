@@ -4,8 +4,6 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { useAuthStore } from '@/lib/store';
 
-export const metadata = { title: 'KIT UM Admin' };
-
 const NAV = [
   { href: '/admin',       label: 'Dashboard' },
   { href: '/admin/slots', label: 'Slots' },
