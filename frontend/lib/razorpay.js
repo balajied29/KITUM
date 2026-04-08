@@ -36,7 +36,7 @@ export function openRazorpayCheckout(opts) {
       amount: opts.amount,
       currency: 'INR',
       order_id: opts.razorpayOrderId,
-      name: 'Shillong Water',
+      name: 'KIT UM',
       description: opts.description || 'Water delivery order',
       prefill: {
         name: opts.name || '',

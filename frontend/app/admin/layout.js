@@ -1,6 +1,6 @@
 import Link from 'next/link';
 
-export const metadata = { title: 'JalDrop Admin' };
+export const metadata = { title: 'KIT UM Admin' };
 
 const NAV = [
   { href: '/admin',        label: 'Dashboard' },
@@ -17,7 +17,7 @@ export default function AdminLayout({ children }) {
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 2C8 8 5 12 5 15a7 7 0 0014 0c0-3-3-7-7-13z" />
             </svg>
           </div>
-          <span className="text-sm font-700 text-text-main">JalDrop Admin</span>
+          <span className="text-sm font-700 text-text-main">KIT UM Admin</span>
         </div>
         <nav className="flex gap-1">
           {NAV.map((n) => (

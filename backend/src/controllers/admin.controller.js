@@ -13,10 +13,8 @@ const getAllOrders = async (req, res) => {
     if (status) filter.status = status;
 
     if (date) {
-      const start = new Date(date);
-      start.setHours(0, 0, 0, 0);
-      const end = new Date(date);
-      end.setHours(23, 59, 59, 999);
+      const start = new Date(date + 'T00:00:00.000Z');
+      const end   = new Date(date + 'T23:59:59.999Z');
       const slots = await SlotConfig.find({ date: { $gte: start, $lte: end } }).select('_id');
       filter.slotId = { $in: slots.map((s) => s._id) };
     }
@@ -88,9 +86,17 @@ const getSlots = async (req, res) => {
   }
 };
 
+// Normalize a date value to UTC midnight to prevent timezone drift
+const toUtcMidnight = (dateVal) => {
+  if (!dateVal) return dateVal;
+  const str = typeof dateVal === 'string' ? dateVal.split('T')[0] : dateVal.toISOString().split('T')[0];
+  return new Date(str + 'T00:00:00.000Z');
+};
+
 const createSlot = async (req, res) => {
   try {
-    const slot = await SlotConfig.create(req.body);
+    const body = { ...req.body, date: toUtcMidnight(req.body.date) };
+    const slot = await SlotConfig.create(body);
     res.status(201).json({ success: true, data: slot });
   } catch (err) {
     if (err.code === 11000) {

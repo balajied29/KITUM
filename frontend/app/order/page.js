@@ -7,11 +7,12 @@ import { useCartStore, useAuthStore } from '@/lib/store';
 import ProductCard from '@/components/ProductCard';
 import SlotPicker from '@/components/SlotPicker';
 import StepIndicator from '@/components/StepIndicator';
+import AppHeader from '@/components/AppHeader';
 
 export default function OrderPage() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const { slotId, totalAmount, totalItems } = useCartStore();
+  const { slot, totalAmount, totalItems } = useCartStore();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -27,30 +28,26 @@ export default function OrderPage() {
 
   const handleNext = () => {
     if (!user) return router.push('/login');
-    if (cartCount === 0) return;
-    if (!slotId) return;
+    if (cartCount === 0 || !slot?._id) return;
     router.push('/checkout');
   };
 
   return (
-    <main className="px-4 pt-5 pb-4">
+    <main className="pb-32">
+      <AppHeader showLocality={false} />
       <StepIndicator step={cartCount > 0 ? 2 : 1} />
 
-      {/* Header */}
-      <div className="flex items-center gap-3 mb-5">
-        <button onClick={() => router.back()} className="text-text-muted hover:text-text-main transition-colors">
-          <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
+      {/* Title */}
+      <div className="px-4 mb-4">
         <h1 className="text-base font-700 text-text-main">Select Water Type</h1>
+        <p className="text-xs text-text-muted mt-0.5">High quality water delivered to your doorstep.</p>
       </div>
 
       {/* Product grid */}
-      <section className="mb-6">
+      <section className="px-4 mb-4">
         {loading ? (
           <div className="grid grid-cols-2 gap-3">
-            {[1,2,3,4].map((i) => <div key={i} className="card h-40 animate-pulse bg-bg-card" />)}
+            {[1, 2, 3, 4].map((i) => <div key={i} className="card h-48 animate-pulse bg-bg-card" />)}
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3">
@@ -59,8 +56,18 @@ export default function OrderPage() {
         )}
       </section>
 
+      {/* Commitment banner */}
+      <section className="px-4 mb-4">
+        <div className="card border-primary/20 bg-blue-50/50">
+          <p className="text-[10px] font-700 text-primary uppercase tracking-widest mb-1">Our Commitment</p>
+          <p className="text-[11px] text-text-muted leading-relaxed">
+            KIT UM drivers will contact you 10 minutes prior to arrival. Please ensure someone is available to receive the delivery. Unattended deliveries will be rescheduled for the next available slot.
+          </p>
+        </div>
+      </section>
+
       {/* Tanker banner */}
-      <section className="mb-6">
+      <section className="px-4 mb-4">
         <Link href="/order/tanker" className="card flex items-center justify-between hover:shadow-sm transition-shadow">
           <div>
             <p className="text-xs font-700 text-text-main">Tanker Supply</p>
@@ -73,27 +80,27 @@ export default function OrderPage() {
       </section>
 
       {/* Slot picker */}
-      <section className="mb-24">
+      <section className="px-4 mb-4">
         <h2 className="text-sm font-700 text-text-main mb-3">When should we arrive?</h2>
         <SlotPicker />
       </section>
 
-      {/* Sticky cart bar */}
-      {cartCount > 0 && (
-        <div className="fixed bottom-14 left-0 right-0 max-w-lg mx-auto px-4 pb-3">
-          <button
-            onClick={handleNext}
-            disabled={!slotId}
-            className="btn-primary w-full flex items-center justify-between px-4 py-3 text-sm disabled:opacity-50"
-          >
-            <span className="bg-white/20 text-white text-xs font-medium px-2 py-0.5 rounded">
-              {cartCount} item{cartCount > 1 ? 's' : ''}
-            </span>
-            <span>Next: Pick Slot →</span>
-            <span className="font-700">₹{cartTotal}</span>
-          </button>
-        </div>
-      )}
+      {/* Sticky footer */}
+      <div className="fixed bottom-14 left-0 right-0 max-w-lg mx-auto px-4 pb-3">
+        <button
+          onClick={handleNext}
+          disabled={cartCount === 0 || !slot?._id}
+          className="btn-primary w-full flex items-center justify-between px-5 py-3 disabled:opacity-50"
+        >
+          <div className="text-left">
+            <p className="text-[10px] font-medium opacity-75 uppercase tracking-wide">Total Amount</p>
+            <p className="text-base font-700 leading-tight">₹{cartTotal}</p>
+          </div>
+          <span className="text-sm font-medium">
+            {slot?._id ? 'Next: Checkout →' : 'Next: Pick Slot →'}
+          </span>
+        </button>
+      </div>
     </main>
   );
 }

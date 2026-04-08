@@ -19,7 +19,7 @@ function getTierLabel(index) {
 
 export default function TankerPage() {
   const router = useRouter();
-  const { items, addItem, updateQty, totalAmount } = useCartStore();
+  const { items, slot, addItem, updateQty, totalAmount } = useCartStore();
   const [tankers, setTankers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [customVol, setCustomVol] = useState('');
@@ -38,7 +38,8 @@ export default function TankerPage() {
   const getQty = (id) => items.find((i) => i.product._id === id)?.quantity ?? 0;
 
   const cartTotal = totalAmount();
-  const hasItems = items.length > 0;
+  const hasItems  = items.length > 0;
+  const hasSlot   = !!slot?._id;
 
   const handleQuote = (e) => {
     e.preventDefault();
@@ -165,7 +166,7 @@ export default function TankerPage() {
             className="btn-primary w-full flex items-center justify-between px-4 py-3 text-sm"
           >
             <span className="font-700">₹{cartTotal}</span>
-            <span>Next: Pick Slot →</span>
+            <span>{hasSlot ? 'Next: Checkout →' : 'Next: Pick Slot →'}</span>
             <span className="opacity-0 w-12" />
           </button>
         </div>

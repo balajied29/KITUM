@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "nodemon src/index.js",
     "start": "node src/index.js",
-    "seed:products": "node src/seeds/products.js"
+    "seed:products": "node src/seeds/products.js",
+    "seed:admin": "node src/seeds/admin.js"
   },
   "dependencies": {
     "express": "^4.19.2",

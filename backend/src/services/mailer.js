@@ -17,13 +17,13 @@ const transporter = nodemailer.createTransport({
  */
 async function sendOtpEmail(to, otp) {
   const mailOptions = {
-    from: `"Shillong Water" <${process.env.MAIL_FROM}>`,
+    from: `"KIT UM" <${process.env.MAIL_FROM}>`,
     to,
     subject: 'Your login OTP',
     html: `
       <div style="font-family: Inter, system-ui, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px; background: #f8fafc; border-radius: 8px;">
         <h2 style="color: #0f172a; margin: 0 0 8px;">Your one-time password</h2>
-        <p style="color: #64748b; margin: 0 0 24px;">Use the code below to log in to Shillong Water. It expires in <strong>10 minutes</strong>.</p>
+        <p style="color: #64748b; margin: 0 0 24px;">Use the code below to log in to KIT UM. It expires in <strong>10 minutes</strong>.</p>
         <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 24px; text-align: center;">
           <span style="font-size: 36px; font-weight: 700; letter-spacing: 8px; color: #1d4ed8;">${otp}</span>
         </div>

@@ -52,7 +52,7 @@ export default function LoginPage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 2C8 8 5 12 5 15a7 7 0 0014 0c0-3-3-7-7-13z" />
             </svg>
           </div>
-          <h1 className="text-2xl font-700 text-text-main">Shillong Water</h1>
+          <h1 className="text-2xl font-700 text-text-main">KIT UM</h1>
           <p className="text-text-muted text-sm mt-1">
             {step === 'email' ? 'Enter your email to get started.' : `Enter the OTP sent to ${email}`}
           </p>
