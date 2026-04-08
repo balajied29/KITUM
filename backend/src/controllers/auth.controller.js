@@ -22,7 +22,7 @@ const sendOtp = async (req, res) => {
 
     res.json({ success: true, data: { message: 'OTP sent to ' + email } });
   } catch (err) {
-    res.status(500).json({ success: false, error: 'Failed to send OTP' });
+    res.status(500).json({ success: false, error: 'Failed to send OTP', detail: err.message });
   }
 };
 
