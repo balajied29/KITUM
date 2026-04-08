@@ -11,7 +11,7 @@ const mongoose = require('mongoose');
 const User = require('../models/User.model');
 const SlotConfig = require('../models/SlotConfig.model');
 
-const ADMIN_EMAIL = 'admin@shillongwater.com';
+const ADMIN_EMAIL = 'balajied29@gmail.com';
 
 const SLOT_TEMPLATES = [
   { slotLabel: 'Morning',   startTime: '7:00 AM',  endTime: '9:00 AM',  maxCapacity: 20 },
