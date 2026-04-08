@@ -23,9 +23,9 @@ api.interceptors.request.use((config) => {
 });
 
 // Auth
-export const sendOtp  = (email)      => api.post('/auth/send-otp',  { email });
-export const verifyOtp = (email, otp) => api.post('/auth/verify-otp', { email, otp });
-export const getMe    = ()            => api.get('/auth/me');
+export const register = (name, email, password) => api.post('/auth/register', { name, email, password });
+export const login    = (email, password)        => api.post('/auth/login',    { email, password });
+export const getMe    = ()                       => api.get('/auth/me');
 
 // Products
 export const getProducts = () => api.get('/products');

@@ -1,64 +1,52 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User.model');
-const OtpVerification = require('../models/OtpVerification.model');
-const { sendOtpEmail } = require('../services/mailer');
 
-const generateOtp = () => String(Math.floor(100000 + Math.random() * 900000));
+const signToken = (id) =>
+  jwt.sign({ id }, process.env.JWT_SECRET, {
+    expiresIn: process.env.JWT_EXPIRES_IN || '7d',
+  });
 
-const sendOtp = async (req, res) => {
+const register = async (req, res) => {
   try {
-    const { email } = req.body;
-    if (!email) {
-      return res.status(400).json({ success: false, error: 'Email is required' });
-    }
+    const { name, email, password } = req.body;
+    if (!name || !email || !password)
+      return res.status(400).json({ success: false, error: 'Name, email and password are required.' });
+    if (password.length < 6)
+      return res.status(400).json({ success: false, error: 'Password must be at least 6 characters.' });
 
-    const otp = generateOtp();
-    const otpHash = await bcrypt.hash(otp, 10);
+    const existing = await User.findOne({ email: email.toLowerCase().trim() });
+    if (existing)
+      return res.status(409).json({ success: false, error: 'An account with this email already exists.' });
 
-    await OtpVerification.deleteMany({ email });
-    await OtpVerification.create({ email, otpHash });
-    await sendOtpEmail(email, otp);
+    const hashed = await bcrypt.hash(password, 10);
+    const user = await User.create({ name, email, password: hashed });
 
-    res.json({ success: true, data: { message: 'OTP sent to ' + email } });
+    const token = signToken(user._id);
+    res.status(201).json({ success: true, data: { token, user } });
   } catch (err) {
-    res.status(500).json({ success: false, error: 'Failed to send OTP' });
+    res.status(500).json({ success: false, error: 'Registration failed. Please try again.' });
   }
 };
 
-const verifyOtp = async (req, res) => {
+const login = async (req, res) => {
   try {
-    const { email, otp } = req.body;
-    if (!email || !otp) {
-      return res.status(400).json({ success: false, error: 'Email and OTP are required' });
-    }
+    const { email, password } = req.body;
+    if (!email || !password)
+      return res.status(400).json({ success: false, error: 'Email and password are required.' });
 
-    const record = await OtpVerification.findOne({ email });
-    if (!record) {
-      return res.status(400).json({ success: false, error: 'OTP expired or not found' });
-    }
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
+    if (!user)
+      return res.status(401).json({ success: false, error: 'Invalid email or password.' });
 
-    const valid = await bcrypt.compare(String(otp), record.otpHash);
-    if (!valid) {
-      return res.status(400).json({ success: false, error: 'Invalid OTP' });
-    }
+    const valid = await bcrypt.compare(password, user.password);
+    if (!valid)
+      return res.status(401).json({ success: false, error: 'Invalid email or password.' });
 
-    await OtpVerification.deleteMany({ email });
-
-    // Upsert: create user on first login, return existing on subsequent logins
-    const user = await User.findOneAndUpdate(
-      { email },
-      { $setOnInsert: { email } },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
-    );
-
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: process.env.JWT_EXPIRES_IN || '7d',
-    });
-
+    const token = signToken(user._id);
     res.json({ success: true, data: { token, user } });
   } catch (err) {
-    res.status(500).json({ success: false, error: 'Verification failed' });
+    res.status(500).json({ success: false, error: 'Login failed. Please try again.' });
   }
 };
 
@@ -66,4 +54,4 @@ const getMe = async (req, res) => {
   res.json({ success: true, data: req.user });
 };
 
-module.exports = { sendOtp, verifyOtp, getMe };
+module.exports = { register, login, getMe };

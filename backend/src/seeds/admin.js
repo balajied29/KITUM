@@ -8,10 +8,12 @@
 
 require('dotenv').config();
 const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
 const User = require('../models/User.model');
 const SlotConfig = require('../models/SlotConfig.model');
 
-const ADMIN_EMAIL = 'balajiedkiwaosungoh29@gmail.com';
+const ADMIN_EMAIL    = 'balajiedkiwaosungoh29@gmail.com';
+const ADMIN_PASSWORD = 'Admin@KitUM2026';
 
 const SLOT_TEMPLATES = [
   { slotLabel: 'Morning',   startTime: '7:00 AM',  endTime: '9:00 AM',  maxCapacity: 20 },
@@ -31,9 +33,10 @@ async function seed() {
   console.log('Connected to MongoDB');
 
   // Admin user
+  const hashed = await bcrypt.hash(ADMIN_PASSWORD, 10);
   const admin = await User.findOneAndUpdate(
     { email: ADMIN_EMAIL },
-    { email: ADMIN_EMAIL, role: 'admin', name: 'Admin', isActive: true },
+    { email: ADMIN_EMAIL, password: hashed, role: 'admin', name: 'Admin', isActive: true },
     { upsert: true, new: true, setDefaultsOnInsert: true }
   );
   console.log(`Admin user: ${admin.email} (${admin._id})`);
@@ -59,7 +62,7 @@ async function seed() {
 
   await mongoose.disconnect();
   console.log('Done.');
-  console.log(`\nLog in with: ${ADMIN_EMAIL} (send OTP to this email)`);
+  console.log(`\nLog in with: ${ADMIN_EMAIL} / ${ADMIN_PASSWORD}`);
 }
 
 seed().catch((err) => {
