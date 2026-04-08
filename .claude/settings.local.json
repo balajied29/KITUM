@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(export PATH=\"/usr/local/bin:/opt/homebrew/bin:$PATH\")",
+      "Bash(npm --version)",
+      "Bash(export PATH=/usr/local/bin:/opt/homebrew/bin:$PATH)",
+      "Bash(brew services:*)",
+      "Bash(npm install:*)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000)",
+      "Bash(curl -s http://localhost:3000)",
+      "Bash(export PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\")",
+      "Bash(brew --version)",
+      "Bash(brew tap:*)",
+      "Bash(brew install:*)",
+      "Bash(lsof -ti:5000)"
+    ]
+  }
+}
