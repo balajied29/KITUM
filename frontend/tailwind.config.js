@@ -7,13 +7,13 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: '#1d4ed8',
-        'primary-hover': '#1e40af',
-        accent: '#0ea5e9',
-        'text-main': '#0f172a',
-        'text-muted': '#64748b',
-        'bg-card': '#f8fafc',
-        'border-default': '#e2e8f0',
+        primary:         '#0047AB',
+        'primary-hover': '#003a8c',
+        accent:          '#0ea5e9',
+        'text-main':     '#0f172a',
+        'text-muted':    '#64748b',
+        'bg-card':       '#f8fafc',
+        'border-default':'#e2e8f0',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
@@ -22,9 +22,10 @@ module.exports = {
         '700': '700',
       },
       borderRadius: {
-        card: '8px',
-        btn: '6px',
-        input: '4px',
+        card:  '16px',
+        btn:   '12px',
+        input: '8px',
+        chip:  '999px',
       },
     },
   },
