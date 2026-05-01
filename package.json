@@ -1,0 +1,14 @@
+{
+  "name": "kit-um",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "dev:backend": "npm --prefix backend run dev",
+    "start:frontend": "npm --prefix frontend run start",
+    "start:backend": "npm --prefix backend run start"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  }
+}

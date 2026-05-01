@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -17,8 +17,8 @@
   }
 
   body {
-    background-color: #ffffff;
-    color: #0f172a;
+    background-color: #faf8ff;
+    color: #131b2e;
     min-height: 100dvh;
   }
 

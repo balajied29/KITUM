@@ -7,16 +7,20 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary:         '#0047AB',
-        'primary-hover': '#003a8c',
+        primary:         '#0037b0',
+        'primary-hover': '#002d8c',
         accent:          '#0ea5e9',
-        'text-main':     '#0f172a',
+        'text-main':     '#131b2e',
         'text-muted':    '#64748b',
-        'bg-card':       '#f8fafc',
+        'text-body':     '#434655',
+        'bg-page':       '#faf8ff',
+        'bg-card':       '#f2f3ff',
+        'bg-trust':      '#eff6ff',
         'border-default':'#e2e8f0',
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans:    ['Inter', 'system-ui', 'sans-serif'],
+        display: ['"Plus Jakarta Sans"', 'Inter', 'system-ui', 'sans-serif'],
       },
       fontWeight: {
         '700': '700',

@@ -1,37 +1,34 @@
 "use client";
 
 import Link from 'next/link';
+import Image from 'next/image';
 import AppHeader from '@/components/AppHeader';
 import { useEffect } from 'react';
 import { useLocationStore } from '@/lib/store';
-import LOCALITIES from '@/constants/localities';
 
-const FEATURES = [
+const TRUST_BADGES = [
   {
-    label: '2-Hour Slots',
-    sub: 'Precise delivery windows',
+    label: '2-Hour\nSlots',
     icon: (
-      <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="#0047AB" strokeWidth={1.8}>
+      <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="#0037b0" strokeWidth={1.8}>
         <circle cx="12" cy="12" r="9" />
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 7v5l3 3" />
       </svg>
     ),
   },
   {
-    label: 'Cash & UPI',
-    sub: 'Pay how you prefer',
+    label: 'Cash &\nUPI',
     icon: (
-      <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="#0047AB" strokeWidth={1.8}>
+      <svg width="26" height="20" fill="none" viewBox="0 0 24 24" stroke="#0037b0" strokeWidth={1.8}>
         <rect x="2" y="5" width="20" height="14" rx="2" />
         <path strokeLinecap="round" d="M2 10h20" />
       </svg>
     ),
   },
   {
-    label: 'Track Live',
-    sub: 'Know when we arrive',
+    label: 'Track\nLive',
     icon: (
-      <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="#0047AB" strokeWidth={1.8}>
+      <svg width="26" height="26" fill="none" viewBox="0 0 24 24" stroke="#0037b0" strokeWidth={1.8}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
         <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
       </svg>
@@ -39,46 +36,30 @@ const FEATURES = [
   },
 ];
 
-const PRODUCTS = [
+const SERVICES = [
   {
     href: '/order',
     name: 'Standard 20L Jar',
-    desc: 'Multi-stage purified water with essential minerals.',
     price: '₹60',
+    desc: 'Multi-stage purified water with essential minerals.',
     cta: 'Add to Cart',
-    img: (
-      <svg width="60" height="72" viewBox="0 0 60 72" fill="none">
-        <ellipse cx="30" cy="64" rx="16" ry="5" fill="#dbeafe" />
-        <rect x="12" y="20" width="36" height="42" rx="12" fill="#bfdbfe" />
-        <rect x="14" y="22" width="32" height="38" rx="11" fill="#93c5fd" opacity="0.6" />
-        <rect x="20" y="8" width="20" height="14" rx="6" fill="#60a5fa" />
-        <ellipse cx="30" cy="20" rx="18" ry="4" fill="#3b82f6" opacity="0.3" />
-        <path d="M24 44 Q30 52 36 44" stroke="#0047AB" strokeWidth="1.5" strokeLinecap="round" fill="none" />
-        <path d="M30 32 C28 35 27 38 27 40 C27 41.7 28.3 43 30 43 C31.7 43 33 41.7 33 40 C33 38 32 35 30 32Z" fill="#0047AB" fillOpacity="0.45" />
-      </svg>
-    ),
+    img: '/product-jar.jpg',
   },
   {
     href: '/order/tanker',
     name: 'Tanker Supply',
-    desc: '1000L–5000L capacity delivery for residential & commercial.',
     price: 'From ₹800',
+    desc: '2000L – 5000L high-capacity delivery for residential tanks.',
     cta: 'Enquire Now',
-    img: (
-      <svg width="76" height="44" viewBox="0 0 76 44" fill="none">
-        <rect x="2" y="10" width="50" height="24" rx="6" fill="#bfdbfe" />
-        <rect x="50" y="14" width="22" height="18" rx="4" fill="#93c5fd" />
-        <rect x="6" y="14" width="40" height="14" rx="3" fill="#0047AB" fillOpacity="0.12" />
-        <circle cx="14" cy="36" r="6" fill="#334155" />
-        <circle cx="14" cy="36" r="3.5" fill="#94a3b8" />
-        <circle cx="50" cy="36" r="6" fill="#334155" />
-        <circle cx="50" cy="36" r="3.5" fill="#94a3b8" />
-        <circle cx="64" cy="36" r="6" fill="#334155" />
-        <circle cx="64" cy="36" r="3.5" fill="#94a3b8" />
-        <path d="M52 18 L70 18" stroke="#0047AB" strokeWidth="1.5" strokeLinecap="round" />
-      </svg>
-    ),
+    img: '/product-tanker.jpg',
   },
+];
+
+const SHOWN_LOCALITIES = [
+  'Laitumkhrah', 'Police Bazaar',
+  'Lachumiere',  'Mawpat',
+  'Nongthymmai', 'Rynjah',
+  'Bara Bazaar',
 ];
 
 export default function HomePage() {
@@ -89,100 +70,92 @@ export default function HomePage() {
   }, [hasSelected, openModal]);
 
   return (
-    <main className="pb-24 max-w-lg mx-auto">
+    <main className="bg-bg-page pb-28 max-w-[390px] mx-auto min-h-dvh">
       <AppHeader showLocality={true} />
 
       {/* Hero */}
-      <section className="mx-4 mt-2 rounded-card overflow-hidden relative"
-        style={{ background: 'linear-gradient(135deg, #0047AB 0%, #0066cc 60%, #0284c7 100%)' }}>
-        {/* Water splash blobs */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -right-8 -top-8 w-48 h-48 rounded-full opacity-10 bg-white" />
-          <div className="absolute right-4 bottom-0 w-32 h-32 rounded-full opacity-10 bg-white" />
-          <div className="absolute -left-4 bottom-4 w-24 h-24 rounded-full opacity-5 bg-white" />
+      <section className="mx-4 mt-2 rounded-[8px] overflow-hidden relative bg-[#1d4ed8]">
+        <div className="absolute inset-0 opacity-20">
+          <Image src="/hero-bg.jpg" alt="" fill className="object-cover" />
         </div>
-        <div className="relative px-5 pt-6 pb-6 flex items-center gap-4">
-          <div className="flex-1">
-            <p className="text-[10px] font-medium uppercase tracking-widest text-blue-200 mb-2">
-              Clean · Reliable · On-time
-            </p>
-            <h1 className="text-[22px] font-700 leading-tight text-white mb-3">
-              Water delivered<br />to your door,<br />on your schedule.
-            </h1>
-            <p className="text-xs text-blue-100 mb-5 leading-relaxed">
-              Experience the most reliable water supply service in Shillong. Quality tested, timely delivered.
-            </p>
-            <Link
-              href="/order"
-              className="inline-block bg-white text-primary text-sm font-700 px-5 py-2.5 rounded-btn shadow-sm hover:bg-blue-50 transition-colors"
-            >
-              Order Now
-            </Link>
-          </div>
-          {/* Jug illustration */}
-          <div className="flex-shrink-0 opacity-90 pr-1">
-            <svg width="72" height="90" viewBox="0 0 72 90" fill="none">
-              <ellipse cx="36" cy="80" rx="22" ry="7" fill="white" fillOpacity="0.1" />
-              <rect x="18" y="26" width="36" height="50" rx="12" fill="white" fillOpacity="0.2" />
-              <rect x="20" y="28" width="32" height="46" rx="11" fill="white" fillOpacity="0.15" />
-              <rect x="26" y="10" width="20" height="18" rx="7" fill="white" fillOpacity="0.3" />
-              <ellipse cx="36" cy="26" rx="18" ry="4" fill="white" fillOpacity="0.2" />
-              <path d="M28 56 Q36 64 44 56" stroke="white" strokeWidth="1.5" strokeLinecap="round" fill="none" opacity="0.5" />
-              <path d="M36 40 C33.5 44 32 48 32 51 C32 53.2 33.8 55 36 55 C38.2 55 40 53.2 40 51 C40 48 38.5 44 36 40Z" fill="white" fillOpacity="0.5" />
-            </svg>
-          </div>
+        <div className="relative px-8 py-8">
+          <h1 className="font-display font-extrabold text-[36px] leading-[1.25] tracking-[-0.9px] text-white mb-4">
+            Water delivered<br />to your door, on<br />your schedule.
+          </h1>
+          <p className="text-[18px] font-medium text-[#cad3ff] leading-[1.55] mb-8">
+            Experience the most reliable water supply service in Shillong. Quality tested, timely delivered.
+          </p>
+          <Link
+            href="/order"
+            className="inline-block bg-white text-primary text-[18px] font-semibold px-8 py-4 rounded-[6px]"
+          >
+            Order Now
+          </Link>
         </div>
       </section>
 
-      {/* Feature row */}
-      <section className="px-4 mt-4 flex gap-3 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
-        {FEATURES.map((f) => (
-          <div key={f.label} className="flex-shrink-0 bg-white border border-border-default rounded-card p-4 flex flex-col gap-2 min-w-[120px] shadow-sm">
-            <div className="w-9 h-9 bg-blue-50 rounded-xl flex items-center justify-center">
-              {f.icon}
+      {/* Trust Badges */}
+      <section className="mx-4 mt-16 grid grid-cols-3 gap-4">
+        {TRUST_BADGES.map((b) => (
+          <div key={b.label} className="bg-white border border-[rgba(196,197,215,0.15)] rounded-[8px] shadow-[0px_1px_1px_rgba(0,0,0,0.05)] p-6 flex flex-col items-center gap-3">
+            <div className="w-12 h-12 bg-bg-trust rounded-[12px] flex items-center justify-center">
+              {b.icon}
             </div>
-            <p className="text-xs font-700 text-text-main leading-tight">{f.label}</p>
-            <p className="text-[11px] text-text-muted leading-tight">{f.sub}</p>
+            <p className="text-[14px] font-semibold text-text-main text-center leading-[1.45] whitespace-pre-line">
+              {b.label}
+            </p>
           </div>
         ))}
       </section>
 
       {/* Our Services */}
-      <section className="px-4 mt-5">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-700 text-text-main">Our Services</h2>
-          <Link href="/order" className="text-xs text-primary font-medium">View All</Link>
+      <section className="px-6 pt-16 pb-8">
+        <div className="flex items-baseline justify-between mb-8">
+          <h2 className="font-display font-extrabold text-[24px] tracking-[-0.6px] text-primary">
+            Our Services
+          </h2>
+          <Link href="/order" className="text-[14px] font-semibold text-primary">
+            View All
+          </Link>
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          {PRODUCTS.map((p) => (
-            <Link key={p.name} href={p.href}
-              className="bg-white border border-border-default rounded-card p-4 flex flex-col shadow-sm hover:shadow-md transition-shadow">
-              <div className="h-24 bg-bg-card rounded-xl mb-3 flex items-center justify-center">
-                {p.img}
+
+        <div className="flex flex-col gap-6">
+          {SERVICES.map((s) => (
+            <div key={s.name} className="bg-white border border-[rgba(196,197,215,0.1)] rounded-[8px] overflow-hidden">
+              <div className="h-48 relative w-full">
+                <Image src={s.img} alt={s.name} fill className="object-cover" />
               </div>
-              <p className="text-xs font-700 text-text-main leading-snug">{p.name}</p>
-              <p className="text-[11px] text-text-muted mt-1 mb-2 leading-snug">{p.desc}</p>
-              <p className="text-xs font-700 text-primary mb-3">{p.price}</p>
-              <div className="mt-auto border border-primary rounded-btn px-3 py-1.5 text-center text-xs font-700 text-primary">
-                {p.cta}
+              <div className="p-6 flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[20px] font-semibold text-text-main">{s.name}</span>
+                  <span className="text-[18px] font-semibold text-primary">{s.price}</span>
+                </div>
+                <p className="text-[14px] text-text-body leading-[1.45] pb-2">{s.desc}</p>
+                <Link
+                  href={s.href}
+                  className="w-full bg-bg-card text-primary text-[16px] font-semibold text-center py-[10px] rounded-[6px]"
+                >
+                  {s.cta}
+                </Link>
               </div>
-            </Link>
+            </div>
           ))}
         </div>
       </section>
 
       {/* Serving Your Locality */}
-      <section className="px-4 mt-6 mb-4">
-        <h2 className="text-sm font-700 text-text-main mb-3">Serving Your Locality</h2>
-        <div className="grid grid-cols-2 gap-2">
-          {LOCALITIES.slice(0, 6).map((loc) => (
-            <div key={loc}
-              className="bg-bg-card border border-border-default rounded-card px-3 py-2.5 text-xs text-text-muted font-medium text-center">
+      <section className="px-6 py-8">
+        <h2 className="font-display font-extrabold text-[24px] tracking-[-0.6px] text-primary mb-6">
+          Serving Your Locality
+        </h2>
+        <div className="grid grid-cols-2 gap-4">
+          {SHOWN_LOCALITIES.map((loc) => (
+            <div key={loc} className="bg-bg-card rounded-[8px] px-4 py-4 text-[16px] font-semibold text-text-body text-center">
               {loc}
             </div>
           ))}
-          <div className="bg-bg-card border border-border-default rounded-card px-3 py-2.5 text-xs text-primary font-700 text-center col-span-2">
-            More soon…
+          <div className="bg-[#dbeafe] rounded-[8px] px-4 py-4 text-[16px] font-semibold text-primary text-center">
+            More soon...
           </div>
         </div>
       </section>
