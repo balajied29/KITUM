@@ -37,5 +37,9 @@
   },
   "devDependencies": {
     "@babel/core": "^7.25.0"
+  },
+  "overrides": {
+    "expo-asset": "~12.0.13",
+    "expo-font": "~14.0.12"
   }
 }
