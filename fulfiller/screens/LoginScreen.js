@@ -9,6 +9,7 @@ import {
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import * as ImagePicker from 'expo-image-picker';
 import { login as apiLogin, partnerSignup } from '../lib/api';
@@ -19,6 +20,7 @@ import Icon from '../components/Icon';
 
 export default function LoginScreen() {
   const setAuth = useAuth((s) => s.setAuth);
+  const insets = useSafeAreaInsets();
   const [mode, setMode] = useState('signin'); // signin | signup | submitted
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
@@ -111,8 +113,8 @@ export default function LoginScreen() {
   return (
     <View style={styles.root}>
       <StatusBar style="light" />
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <ScrollView contentContainerStyle={[styles.scroll, { paddingTop: insets.top + spacing.xxl, paddingBottom: insets.bottom + spacing.xxl }]} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           {/* Brand */}
           <View style={styles.brand}>
             <View style={styles.logo}>

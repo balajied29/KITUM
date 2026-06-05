@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, spacing, radius, type } from '../lib/theme';
 import { Header, Card, Pill, IconChip } from '../components/ui';
 import Icon from '../components/Icon';
@@ -41,7 +42,7 @@ export default function HistoryScreen({ onBack }) {
   const jobs = data?.jobs || [];
 
   return (
-    <SafeAreaView style={styles.root}>
+    <SafeAreaView edges={['top']} style={styles.root}>
       <Header title="Trip history" onBack={onBack} />
       {loading ? (
         <View style={styles.center}>

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { View, Text, Switch, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView, ActivityIndicator, Animated, Easing } from 'react-native';
+import { View, Text, Switch, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Animated, Easing } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, spacing, radius, type, shadow } from '../lib/theme';
 import { Card, Avatar, IconChip, StatTile, SectionLabel, Button, Gradient } from '../components/ui';
 import Icon from '../components/Icon';
@@ -207,7 +208,7 @@ export function HomeMain({ user, online, onToggleOnline, earnings = 0, navigate,
   const goalProgress = DAILY_GOAL > 0 ? stats.today / DAILY_GOAL : 0;
 
   return (
-    <SafeAreaView style={styles.root}>
+    <SafeAreaView edges={['top']} style={styles.root}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* Gradient hero — identity + online status, the heart of the screen */}
         <Gradient style={styles.hero}>

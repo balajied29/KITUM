@@ -4,7 +4,6 @@ import {
   Text,
   TextInput,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   TouchableOpacity,
   Alert,
@@ -13,6 +12,7 @@ import {
   ActivityIndicator,
   Linking,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, spacing, radius, type } from '../lib/theme';
 import { Header, Card, Input, Button, SectionLabel, MenuRow, Pill } from '../components/ui';
 import Icon from '../components/Icon';
@@ -60,7 +60,7 @@ export default function SupportScreen({ user, onBack, seedTemplate }) {
   const startNew = (tpl) => { setTemplate(tpl); setMode('new'); };
 
   return (
-    <SafeAreaView style={styles.root}>
+    <SafeAreaView edges={['top']} style={styles.root}>
       <Header title="Help & support" onBack={onBack} />
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* Quick contact */}
@@ -147,9 +147,9 @@ function NewRequest({ user, template, onBack, onCreated }) {
   };
 
   return (
-    <SafeAreaView style={styles.root}>
+    <SafeAreaView edges={['top']} style={styles.root}>
       <Header title="New request" onBack={onBack} />
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           {!!template?.label && (
             <View style={styles.topicTag}>

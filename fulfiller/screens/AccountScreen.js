@@ -1,4 +1,5 @@
-import { SafeAreaView, ScrollView, View, Text, StyleSheet } from 'react-native';
+import { ScrollView, View, Text, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, spacing, type } from '../lib/theme';
 import { Card, Avatar, MenuRow, SectionLabel, Pill } from '../components/ui';
 import { contactSupport } from '../lib/support';
@@ -13,7 +14,7 @@ export default function AccountScreen({ navigation }) {
     : 'Required';
 
   return (
-    <SafeAreaView style={styles.root}>
+    <SafeAreaView edges={['top']} style={styles.root}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.hero}>
           <Avatar name={user?.name} size={64} />

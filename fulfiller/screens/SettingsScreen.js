@@ -1,4 +1,5 @@
-import { SafeAreaView, ScrollView, StyleSheet, Linking } from 'react-native';
+import { ScrollView, StyleSheet, Linking } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Constants from 'expo-constants';
 import { colors, spacing } from '../lib/theme';
 import { Header, Card, MenuRow, SectionLabel } from '../components/ui';
@@ -8,7 +9,7 @@ export default function SettingsScreen({ user, onBack, onLogout, onSupport }) {
   const version = Constants.expoConfig?.version || '1.0.0';
 
   return (
-    <SafeAreaView style={styles.root}>
+    <SafeAreaView edges={['top']} style={styles.root}>
       <Header title="Settings" onBack={onBack} />
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <SectionLabel style={styles.label}>Account</SectionLabel>

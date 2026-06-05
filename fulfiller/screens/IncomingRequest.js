@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, Modal, SafeAreaView, Animated, Easing } from 'react-native';
+import { View, Text, StyleSheet, Modal, Animated, Easing } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { colors, spacing, radius, type } from '../lib/theme';
 import { Button, GradientButton, Gradient } from '../components/ui';
@@ -70,7 +71,7 @@ export default function IncomingRequest({ offer, onAccept, onReject }) {
     <Modal visible animationType="slide" transparent={false} statusBarTranslucent>
       <Gradient style={styles.root}>
         <StatusBar style="light" />
-        <SafeAreaView style={{ flex: 1 }}>
+        <SafeAreaView edges={['top', 'bottom']} style={{ flex: 1 }}>
           {/* Header + countdown (over the brand gradient) */}
           <View style={styles.head}>
             <View style={styles.kicker}>

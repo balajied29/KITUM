@@ -1,4 +1,5 @@
-import { View, Text, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, spacing, type } from '../lib/theme';
 import { Header, Card, Button, Avatar, SectionLabel, Divider } from '../components/ui';
 import Icon from '../components/Icon';
@@ -32,7 +33,7 @@ export default function ProfileScreen({ user, onBack, onRequestChange }) {
   };
 
   return (
-    <SafeAreaView style={styles.root}>
+    <SafeAreaView edges={['top']} style={styles.root}>
       <Header title="Profile" onBack={onBack} />
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <View style={styles.hero}>

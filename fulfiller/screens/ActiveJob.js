@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Linking, Platform, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking, Platform, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, spacing, radius, type, shadow } from '../lib/theme';
 import { Button, Card, SectionLabel, Divider, IconChip, Gradient, GradientButton } from '../components/ui';
 import Icon from '../components/Icon';
@@ -139,7 +140,7 @@ export default function ActiveJob({ job, status, paid, onAdvance, onAbandon, onR
   };
 
   return (
-    <SafeAreaView style={styles.root}>
+    <SafeAreaView edges={['top', 'bottom']} style={styles.root}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         {/* Gradient hero */}
         <Gradient style={styles.hero}>
