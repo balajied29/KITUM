@@ -1,9 +1,12 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { getOrderById } from '@/lib/api';
+import { getOrderById, createPayment, verifyOrderPayment } from '@/lib/api';
+import { openRazorpayCheckout } from '@/lib/razorpay';
+import { useAuthStore } from '@/lib/store';
 import OrderStepper from '@/components/OrderStepper';
 import AppHeader from '@/components/AppHeader';
+import ReviewForm from '@/components/ReviewForm';
 
 const STATUS_BADGE = {
   pending:          { cls: 'badge-amber',  dot: 'bg-amber-400',   label: 'Pending' },
@@ -16,15 +19,14 @@ const STATUS_BADGE = {
 export default function OrderStatusPage() {
   const { id } = useParams();
   const router = useRouter();
+  const { user } = useAuthStore();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [paying, setPaying] = useState(false);
+  const [payError, setPayError] = useState('');
 
-  useEffect(() => {
-    getOrderById(id)
-      .then((res) => setOrder(res.data.data))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [id]);
+  const load = () => getOrderById(id).then((res) => setOrder(res.data.data)).catch(() => {});
+  useEffect(() => { load().finally(() => setLoading(false)); }, [id]);
 
   if (loading) return (
     <div className="flex items-center justify-center min-h-dvh">
@@ -40,6 +42,42 @@ export default function OrderStatusPage() {
   const badge = STATUS_BADGE[order.status] ?? STATUS_BADGE.pending;
   const shortId = order._id.slice(-6).toUpperCase();
   const isOutForDelivery = order.status === 'out_for_delivery';
+  // UPI is paid at the door (or any time after confirmation, if the customer prefers).
+  const canPayUpi = order.paymentMode === 'upi' && order.paymentStatus !== 'paid' && ['confirmed', 'out_for_delivery'].includes(order.status);
+
+  const payByUpi = async () => {
+    setPayError('');
+    setPaying(true);
+    try {
+      const payRes = await createPayment(order._id);
+      const { razorpayOrderId, amount, keyId } = payRes.data.data;
+      if (!keyId) {
+        setPayError('Online payment is unavailable right now. You can pay cash on delivery.');
+        setPaying(false);
+        return;
+      }
+      const pay = await openRazorpayCheckout({
+        razorpayOrderId, amount, keyId,
+        name: order.deliveryAddress?.name || user?.name || '',
+        email: user?.email || '',
+        phone: order.deliveryAddress?.phone || user?.phone || '',
+        description: `Order #${shortId}`,
+      });
+      await verifyOrderPayment({
+        orderId: order._id,
+        razorpay_order_id: pay.razorpay_order_id,
+        razorpay_payment_id: pay.razorpay_payment_id,
+        razorpay_signature: pay.razorpay_signature,
+      });
+      await load();
+    } catch (e) {
+      if (e?.message !== 'Payment cancelled by user') {
+        setPayError(e?.response?.data?.error || 'Payment could not be completed.');
+      }
+    } finally {
+      setPaying(false);
+    }
+  };
 
   return (
     <main className="pb-6">
@@ -98,10 +136,29 @@ export default function OrderStatusPage() {
               <span className="font-medium">₹{item.pricePerUnit * item.quantity}</span>
             </div>
           ))}
-          <div className="border-t border-border-default mt-2 pt-2 flex justify-between text-sm font-700">
-            <span>Total</span>
-            <span>₹{order.totalAmount}</span>
+          <div className="border-t border-border-default mt-2 pt-2 space-y-1">
+            {order.platformFee != null && (
+              <>
+                <div className="flex justify-between text-sm text-text-muted">
+                  <span>Subtotal</span>
+                  <span>₹{order.fare ?? order.totalAmount - order.platformFee}</span>
+                </div>
+                <div className="flex justify-between text-sm text-text-muted">
+                  <span>Platform fee (5%)</span>
+                  <span>₹{order.platformFee}</span>
+                </div>
+              </>
+            )}
+            <div className="flex justify-between text-sm font-700">
+              <span>Total</span>
+              <span>₹{order.totalAmount}</span>
+            </div>
           </div>
+          <p className="text-[11px] text-text-muted mt-2">
+            {order.paymentStatus === 'paid'
+              ? 'Paid'
+              : `Pay ₹${order.totalAmount} ${order.paymentMode === 'cod' ? 'in cash' : 'by UPI'} on delivery`}
+          </p>
         </section>
 
         {/* Slot + address */}
@@ -114,8 +171,11 @@ export default function OrderStatusPage() {
             </p>
           )}
           <p className="text-sm text-text-muted">
-            {[order.deliveryAddress?.street, order.deliveryAddress?.landmark, order.deliveryAddress?.locality].filter(Boolean).join(', ')}
+            {[order.deliveryAddress?.flat, order.deliveryAddress?.street, order.deliveryAddress?.landmark, order.deliveryAddress?.locality].filter(Boolean).join(', ')}
           </p>
+          {order.deliveryAddress?.directions && (
+            <p className="text-xs text-text-muted mt-1">Directions: {order.deliveryAddress.directions}</p>
+          )}
         </section>
 
         {/* Driver */}
@@ -133,7 +193,7 @@ export default function OrderStatusPage() {
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="#f59e0b">
                       <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
                     </svg>
-                    <span className="text-xs text-text-muted">4.9</span>
+                    <span className="text-xs text-text-muted">{order.driverAssigned.fulfillerProfile?.rating ?? '5.0'}</span>
                   </div>
                 </div>
               </div>
@@ -155,6 +215,28 @@ export default function OrderStatusPage() {
               )}
             </div>
           </section>
+        )}
+
+        {/* Pay by UPI at delivery (nothing was charged at booking) */}
+        {canPayUpi && (
+          <section className="card">
+            <p className="text-sm font-700 text-text-main">Pay ₹{order.totalAmount} by UPI</p>
+            <p className="text-xs text-text-muted mt-0.5 mb-3">Pay securely when your tanker arrives — or pay cash to the driver.</p>
+            {payError && <p className="text-xs text-red-600 mb-2">{payError}</p>}
+            <button onClick={payByUpi} disabled={paying} className="btn-primary w-full disabled:opacity-50">
+              {paying ? 'Opening payment…' : `Pay ₹${order.totalAmount}`}
+            </button>
+          </section>
+        )}
+        {order.paymentStatus === 'paid' && order.status !== 'delivered' && (
+          <div className="rounded-card border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-center text-xs font-medium text-emerald-800">
+            Payment received — thank you!
+          </div>
+        )}
+
+        {/* Rate the delivery once it's done */}
+        {order.status === 'delivered' && order.driverAssigned && (
+          <ReviewForm source="order" id={order._id} partnerName={order.driverAssigned.name} />
         )}
 
         {/* Reorder */}

@@ -3,22 +3,35 @@
   "version": "0.1.0",
   "description": "KIT UM - Water Supplier API for Shillong",
   "main": "src/index.js",
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "dev": "nodemon src/index.js",
     "start": "node src/index.js",
     "seed:products": "node src/seeds/products.js",
-    "seed:admin": "node src/seeds/admin.js"
+    "seed:admin": "node src/seeds/admin.js",
+    "seed:fulfillers": "node src/seeds/fulfillers.js",
+    "seed:localities": "node src/seeds/geocode-localities.js",
+    "migrate:scheduled": "node src/migrations/2026-06-scheduled-assignment.js"
   },
   "dependencies": {
-    "express": "^4.19.2",
-    "mongoose": "^8.3.2",
-    "dotenv": "^16.4.5",
+    "@aws-sdk/client-s3": "^3.1061.0",
+    "@aws-sdk/s3-request-presigner": "^3.1061.0",
     "bcryptjs": "^2.4.3",
-    "jsonwebtoken": "^9.0.2",
     "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "expo-server-sdk": "^3.15.0",
+    "express": "^4.19.2",
+    "express-rate-limit": "^7.5.1",
     "express-validator": "^7.0.1",
+    "helmet": "^7.2.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.3.2",
+    "multer": "^2.1.1",
     "nodemailer": "^6.9.13",
-    "razorpay": "^2.9.2"
+    "razorpay": "^2.9.2",
+    "socket.io": "^4.8.3"
   },
   "devDependencies": {
     "nodemon": "^3.1.0"

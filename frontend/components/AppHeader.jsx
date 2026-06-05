@@ -7,20 +7,23 @@ export default function AppHeader({ showLocality = true }) {
   const displayLocality = locality || 'Laitumkhrah';
 
   return (
-    <header className="flex items-center justify-between px-6 py-4 bg-bg-page sticky top-0 z-40">
+    <header
+      className="flex items-center justify-between px-5 pb-3 bg-bg-page sticky top-0 z-40"
+      style={{ paddingTop: 'calc(0.75rem + env(safe-area-inset-top, 0px))' }}
+    >
       <Link href="/" className="flex items-center gap-2">
         <svg width="16" height="20" fill="none" viewBox="0 0 16 20" stroke="#0037b0" strokeWidth={2}>
           <path strokeLinecap="round" strokeLinejoin="round" d="M8 1C5 6 2 10 2 13a6 6 0 0012 0c0-3-3-7-6-12z" />
         </svg>
         <span className="font-display font-bold text-[20px] tracking-[-0.5px] text-primary">
-          Shillong Water
+          KitUm
         </span>
       </Link>
 
       {showLocality && (
         <button
           onClick={openModal}
-          className="flex items-center gap-1.5 bg-bg-card rounded-[12px] px-3 py-1.5"
+          className="flex items-center gap-1.5 bg-bg-card rounded-btn px-3 py-2 transition-all hover:bg-white hover:shadow-sm active:scale-95"
         >
           <svg width="12" height="15" fill="none" viewBox="0 0 24 24" stroke="#131b2e" strokeWidth={2.2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />

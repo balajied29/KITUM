@@ -5,14 +5,46 @@ import { persist } from 'zustand/middleware';
 export const useAuthStore = create(
   persist(
     (set) => ({
-      user:  null,
-      token: null,
-      setAuth: (user, token) => set({ user, token }),
-      logout: () => set({ user: null, token: null }),
+      user: null,
+      accessToken: null,
+      refreshToken: null,
+      // Set the whole session (login / register / reset).
+      setAuth: (user, accessToken, refreshToken) => set({ user, accessToken, refreshToken }),
+      // Update just the tokens (called after a silent refresh).
+      setTokens: (accessToken, refreshToken) => set({ accessToken, refreshToken }),
+      // Update just the user (profile edit / session refresh).
+      setUser: (user) => set({ user }),
+      logout: () => set({ user: null, accessToken: null, refreshToken: null }),
     }),
     { name: 'auth' }
   )
 );
+
+// Admin session lives in its OWN persisted key so it never collides with a
+// customer session in the same browser (which previously caused refresh-token
+// reuse → forced logout on reload).
+export const useAdminAuthStore = create(
+  persist(
+    (set) => ({
+      user: null,
+      accessToken: null,
+      refreshToken: null,
+      setAuth: (user, accessToken, refreshToken) => set({ user, accessToken, refreshToken }),
+      setTokens: (accessToken, refreshToken) => set({ accessToken, refreshToken }),
+      setUser: (user) => set({ user }),
+      logout: () => set({ user: null, accessToken: null, refreshToken: null }),
+    }),
+    { name: 'admin-auth' }
+  )
+);
+
+// The auth store in effect for the current area: admin pages use the admin
+// session, everything else uses the customer session. Shared axios/refresh code
+// keys off this so each area uses (and rotates) its own tokens.
+export const activeAuthStore = () =>
+  (typeof window !== 'undefined' && window.location.pathname.startsWith('/admin'))
+    ? useAdminAuthStore
+    : useAuthStore;
 
 export const useCartStore = create(
   persist(
@@ -58,8 +90,13 @@ export const useLocationStore = create(
       address: null, // free-form reverse geocoded string
       hasSelected: false,
       modalOpen: false,
+      // Active delivery drop chosen via the map picker / saved addresses:
+      // { address, landmark, lat, lng, contactName, contactPhone, label }
+      drop: null,
       setLocation: ({ locality, coords, address }) =>
         set({ locality, coords: coords || null, address: address || null, hasSelected: true, modalOpen: false }),
+      setDrop: (drop) => set({ drop }),
+      clearDrop: () => set({ drop: null }),
       openModal: () => set({ modalOpen: true }),
       closeModal: () => set({ modalOpen: false }),
     }),

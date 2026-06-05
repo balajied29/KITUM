@@ -1,0 +1,17 @@
+# Caddy reverse proxy for the KITUM backend.
+#
+# Caddy auto-provisions + auto-renews a Let's Encrypt TLS cert for this domain
+# and transparently upgrades WebSocket (Socket.IO) connections — no extra config
+# needed (this is why Caddy beats nginx+certbot for a first deploy).
+#
+# Install on the VM at /etc/caddy/Caddyfile, set your real domain below, then:
+#   sudo systemctl reload caddy
+#
+# Prerequisites:
+#   - A DNS A record:  api.YOURDOMAIN.com  ->  <VM public IP>
+#   - Ports 80 AND 443 open in the VM's Network Security Group (NSG)
+
+api.YOURDOMAIN.com {
+	encode gzip
+	reverse_proxy localhost:5000
+}

@@ -1,13 +1,21 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { getProducts } from '@/lib/api';
 import { useCartStore, useAuthStore } from '@/lib/store';
+import { isTankerProduct } from '@/lib/productImage';
 import ProductCard from '@/components/ProductCard';
 import SlotPicker from '@/components/SlotPicker';
 import StepIndicator from '@/components/StepIndicator';
 import AppHeader from '@/components/AppHeader';
+
+const litresOf = (p) => Number(p?.tankerLitres) || 0;
+
+const Arrow = ({ className = 'w-4 h-4' }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round">
+    <path d="M5 12h14M13 6l6 6-6 6" />
+  </svg>
+);
 
 export default function OrderPage() {
   const router = useRouter();
@@ -15,6 +23,7 @@ export default function OrderPage() {
   const { slot, totalAmount, totalItems } = useCartStore();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const slotRef = useRef(null);
 
   useEffect(() => {
     getProducts()
@@ -25,80 +34,112 @@ export default function OrderPage() {
 
   const cartTotal = totalAmount();
   const cartCount = totalItems();
+  const hasSlot = !!slot?._id;
+
+  // Categorise with the SAME rule productImage() uses, so a SKU's section and its
+  // photo can never disagree (e.g. a "Tanker" with tankerLitres=0).
+  const tankers = products.filter(isTankerProduct).sort((a, b) => litresOf(a) - litresOf(b));
+  const bottled = products.filter((p) => !isTankerProduct(p));
 
   const handleNext = () => {
-    if (!user) return router.push('/login');
-    if (cartCount === 0 || !slot?._id) return;
+    if (!user) return router.push('/login?next=/order');
+    if (cartCount === 0) return;
+    if (!hasSlot) {
+      // Items chosen but no slot yet — guide the eye to the picker instead of a dead button.
+      slotRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      return;
+    }
     router.push('/checkout');
   };
 
   return (
-    <main className="pb-32">
-      <AppHeader showLocality={false} />
-      <StepIndicator step={cartCount > 0 ? 2 : 1} />
+    <main className="bg-bg-page min-h-dvh pb-28">
+      <AppHeader showLocality={true} />
 
-      {/* Title */}
-      <div className="px-4 mb-4">
-        <h1 className="text-base font-700 text-text-main">Select Water Type</h1>
-        <p className="text-xs text-text-muted mt-0.5">High quality water delivered to your doorstep.</p>
-      </div>
+      {/* Intro */}
+      <section className="px-4 pt-1 pb-3">
+        <h1 className="font-display font-extrabold text-[24px] tracking-[-0.5px] text-text-main leading-tight">
+          Order for later
+        </h1>
+        <p className="text-[13px] text-text-muted mt-1">
+          Pick your water and reserve a 2-hour slot — we deliver right on time.
+        </p>
+      </section>
 
-      {/* Product grid */}
-      <section className="px-4 mb-4">
+      <StepIndicator step={hasSlot ? 3 : cartCount > 0 ? 2 : 1} />
+
+      <div className="px-4">
         {loading ? (
           <div className="grid grid-cols-2 gap-3">
-            {[1, 2, 3, 4].map((i) => <div key={i} className="card h-48 animate-pulse bg-bg-card" />)}
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="rounded-card border border-border-default bg-white p-3">
+                <div className="aspect-[5/4] rounded-xl bg-bg-card animate-pulse mb-2.5" />
+                <div className="h-3.5 w-3/4 rounded bg-bg-card animate-pulse" />
+                <div className="mt-3 flex items-center justify-between">
+                  <div className="h-4 w-10 rounded bg-bg-card animate-pulse" />
+                  <div className="h-9 w-14 rounded-btn bg-bg-card animate-pulse" />
+                </div>
+              </div>
+            ))}
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3">
-            {products.map((p) => <ProductCard key={p._id} product={p} />)}
-          </div>
+          <>
+            {tankers.length > 0 && (
+              <section className="mb-6">
+                <div className="flex items-baseline justify-between mb-3">
+                  <h2 className="text-[15px] font-700 text-text-main">Tankers</h2>
+                  <span className="text-xs text-text-muted">500L – 2000L</span>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  {tankers.map((p) => <ProductCard key={p._id} product={p} />)}
+                </div>
+              </section>
+            )}
+
+            {bottled.length > 0 && (
+              <section className="mb-6">
+                <div className="flex items-baseline justify-between mb-3">
+                  <h2 className="text-[15px] font-700 text-text-main">Bottles &amp; Jars</h2>
+                  <span className="text-xs text-text-muted">Jars · bottles · crates</span>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  {bottled.map((p) => <ProductCard key={p._id} product={p} />)}
+                </div>
+              </section>
+            )}
+          </>
         )}
-      </section>
 
-      {/* Commitment banner */}
-      <section className="px-4 mb-4">
-        <div className="card border-primary/20 bg-blue-50/50">
-          <p className="text-[10px] font-700 text-primary uppercase tracking-widest mb-1">Our Commitment</p>
-          <p className="text-[11px] text-text-muted leading-relaxed">
-            KIT UM drivers will contact you 10 minutes prior to arrival. Please ensure someone is available to receive the delivery. Unattended deliveries will be rescheduled for the next available slot.
-          </p>
-        </div>
-      </section>
+        {/* Slot */}
+        <section ref={slotRef} className="scroll-mt-4 mb-2">
+          <h2 className="text-[15px] font-700 text-text-main mb-3">When should we arrive?</h2>
+          <SlotPicker />
+        </section>
+      </div>
 
-      {/* Tanker banner */}
-      <section className="px-4 mb-4">
-        <Link href="/order/tanker" className="card flex items-center justify-between hover:shadow-sm transition-shadow">
-          <div>
-            <p className="text-xs font-700 text-text-main">Tanker Supply</p>
-            <p className="text-xs text-text-muted mt-0.5">1000L – 5000L · From ₹800</p>
-          </div>
-          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#64748b" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-          </svg>
-        </Link>
-      </section>
-
-      {/* Slot picker */}
-      <section className="px-4 mb-4">
-        <h2 className="text-sm font-700 text-text-main mb-3">When should we arrive?</h2>
-        <SlotPicker />
-      </section>
-
-      {/* Sticky footer */}
-      <div className="fixed bottom-14 left-0 right-0 max-w-lg mx-auto px-4 pb-3">
+      {/* Sticky footer CTA */}
+      <div className="cta-dock">
         <button
           onClick={handleNext}
-          disabled={cartCount === 0 || !slot?._id}
-          className="btn-primary w-full flex items-center justify-between px-5 py-3 disabled:opacity-50"
+          disabled={cartCount === 0}
+          className="btn-primary w-full flex items-center justify-between gap-3 px-5 py-3.5 disabled:opacity-60"
         >
-          <div className="text-left">
-            <p className="text-[10px] font-medium opacity-75 uppercase tracking-wide">Total Amount</p>
-            <p className="text-base font-700 leading-tight">₹{cartTotal}</p>
-          </div>
-          <span className="text-sm font-medium">
-            {slot?._id ? 'Next: Checkout →' : 'Next: Pick Slot →'}
-          </span>
+          {cartCount === 0 ? (
+            <span className="mx-auto text-sm font-700">Add water to get started</span>
+          ) : (
+            <>
+              <span className="flex flex-col items-start leading-tight">
+                <span className="text-[10px] font-medium uppercase tracking-wide opacity-75">
+                  {cartCount} item{cartCount > 1 ? 's' : ''} · Total
+                </span>
+                <span className="text-base font-700">₹{cartTotal}</span>
+              </span>
+              <span className="inline-flex items-center gap-1.5 text-sm font-700">
+                {hasSlot ? 'Review & checkout' : 'Pick a slot'}
+                <Arrow className="w-4 h-4" />
+              </span>
+            </>
+          )}
         </button>
       </div>
     </main>

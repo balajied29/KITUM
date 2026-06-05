@@ -1,3 +1,12 @@
+/**
+ * Vercel serverless entry — SCHEDULED FLOW ONLY.
+ *
+ * The instant/ride-hailing flow (real-time dispatch + Socket.IO + live location)
+ * requires a persistent process and is served exclusively by the Railway server
+ * (src/index.js). Point NEXT_PUBLIC_API_URL / NEXT_PUBLIC_SOCKET_URL at Railway
+ * for the instant features. The `/api/requests` + `/api/fulfiller` routes are
+ * deliberately NOT mounted here because dispatch timers cannot run on serverless.
+ */
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -17,7 +26,10 @@ app.use('/api/auth',     require('../src/routes/auth.routes'));
 app.use('/api/products', require('../src/routes/product.routes'));
 app.use('/api/slots',    require('../src/routes/slot.routes'));
 app.use('/api/orders',   require('../src/routes/order.routes'));
+app.use('/api/addresses', require('../src/routes/address.routes'));
 app.use('/api/payments', require('../src/routes/payment.routes'));
+app.use('/api/support',  require('../src/routes/support.routes'));
+app.use('/api/reviews',  require('../src/routes/review.routes'));
 app.use('/api/admin',    require('../src/routes/admin.routes'));
 
 app.get('/', (req, res) => {

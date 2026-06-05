@@ -1,15 +1,14 @@
 import '../styles/globals.css';
-import BottomNav from '@/components/BottomNav';
-import LocationModal from '@/components/LocationModal';
+import AppFrame from '@/components/AppFrame';
 
 export const metadata = {
-  title: 'KIT UM — Water delivered to your door',
+  title: 'KitUm — Water delivered to your door',
   description: 'Slot-based water delivery for homes and shops in Shillong. UPI & COD.',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'KIT UM',
+    title: 'KitUm',
   },
   icons: {
     apple: '/icons/icon-192x192.png',
@@ -17,7 +16,7 @@ export const metadata = {
 };
 
 export const viewport = {
-  themeColor: '#1d4ed8',
+  themeColor: '#263cf2',
   width: 'device-width',
   initialScale: 1,
   minimumScale: 1,
@@ -32,15 +31,11 @@ export default function RootLayout({ children }) {
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="KIT UM" />
+        <meta name="apple-mobile-web-app-title" content="KitUm" />
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
       </head>
-      <body className="font-sans antialiased bg-white text-text-main">
-        <div className="max-w-lg mx-auto min-h-dvh pb-14">
-          {children}
-        </div>
-        <LocationModal />
-        <BottomNav />
+      <body className="font-sans antialiased bg-[#e6e8ef] text-text-main">
+        <AppFrame>{children}</AppFrame>
       </body>
     </html>
   );

@@ -2,13 +2,15 @@
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore } from '@/lib/store';
+import { logout as apiLogout } from '@/lib/api';
 import AppHeader from '@/components/AppHeader';
+import Footer from '@/components/Footer';
 
 const MENU = [
   { label: 'My Orders', href: '/orders' },
-  { label: 'Delivery Addresses', href: '#' },
-  { label: 'Payment Methods', href: '#' },
-  { label: 'Help & Support', href: '#' },
+  { label: 'Delivery Addresses', href: '/addresses' },
+  { label: 'Help & Support', href: '/contact' },
+  { label: 'Legal & Policies', href: '/legal' },
 ];
 
 export default function AccountPage() {
@@ -16,6 +18,8 @@ export default function AccountPage() {
   const { user, logout } = useAuthStore();
 
   const handleLogout = () => {
+    // Revoke the refresh token server-side (best-effort), then clear locally.
+    apiLogout(useAuthStore.getState().refreshToken).catch(() => {});
     logout();
     router.replace('/');
   };
@@ -69,6 +73,8 @@ export default function AccountPage() {
           Sign Out
         </button>
       </div>
+
+      <Footer />
     </main>
   );
 }

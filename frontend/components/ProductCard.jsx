@@ -1,55 +1,71 @@
 'use client';
 import { useCartStore } from '@/lib/store';
+import { productImage } from '@/lib/productImage';
 
 export default function ProductCard({ product }) {
   const { items, addItem, updateQty } = useCartStore();
   const cartItem = items.find((i) => i.product._id === product._id);
   const qty = cartItem?.quantity ?? 0;
+  const selected = qty > 0;
+  const img = productImage(product);
 
   return (
-    <div className="card hover:shadow-sm transition-shadow flex flex-col">
-      {/* Image area */}
-      <div className="h-28 bg-bg-card rounded mb-3 flex items-center justify-center overflow-hidden">
-        {product.image ? (
-          <img src={product.image} alt={product.name} className="w-full h-full object-contain" />
-        ) : (
-          <svg width="36" height="36" fill="none" viewBox="0 0 24 24" stroke="#1d4ed8" strokeWidth={1.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 2C8 8 5 12 5 15a7 7 0 0014 0c0-3-3-7-7-13z" />
-          </svg>
+    <div
+      className={`relative flex flex-col bg-white rounded-card p-3 transition-all ${
+        selected
+          ? 'border border-primary shadow-[0_0_0_1px_rgba(0,55,176,0.25)]'
+          : 'border border-border-default shadow-sm'
+      }`}
+    >
+      {/* Photo */}
+      <div className="relative aspect-[5/4] rounded-xl overflow-hidden bg-bg-trust mb-2.5">
+        <img src={img} alt={product.name} loading="lazy" className="w-full h-full object-cover" />
+        {/* Unit chip — keeps same-photo SKUs (e.g. jar/pack/crate) visually distinct + scannable */}
+        {product.unit && (
+          <span className="absolute bottom-1.5 left-1.5 rounded-full bg-white/85 backdrop-blur px-2 py-0.5 text-[10px] font-700 text-text-main shadow-sm">
+            {product.unit}
+          </span>
+        )}
+        {selected && (
+          <span className="absolute top-1.5 right-1.5 min-w-[22px] h-[22px] px-1.5 rounded-full bg-primary text-white text-[11px] font-700 flex items-center justify-center shadow">
+            {qty}
+          </span>
         )}
       </div>
 
-      {/* Info */}
-      <div className="flex-1 flex flex-col">
-        <p className="text-sm font-700 text-text-main leading-snug">{product.name}</p>
-        {product.description && (
-          <p className="text-[11px] text-text-muted mt-1 leading-relaxed flex-1">{product.description}</p>
-        )}
-        <p className="text-sm font-700 text-primary mt-2 mb-3">₹{product.price}</p>
-      </div>
+      {/* Name */}
+      <p className="text-sm font-700 text-text-main leading-snug">{product.name}</p>
 
-      {/* Stepper / Add */}
-      {qty === 0 ? (
-        <button onClick={() => addItem(product)} className="btn-primary w-full text-sm py-2">
-          Add to Cart
-        </button>
-      ) : (
-        <div className="flex items-center justify-between border border-border-default rounded-btn overflow-hidden">
-          <button
-            onClick={() => updateQty(product._id, qty - 1)}
-            className="w-9 h-9 flex items-center justify-center text-primary font-medium hover:bg-blue-50 transition-colors text-lg"
-          >
-            −
-          </button>
-          <span className="text-sm font-700 text-text-main">{qty}</span>
+      {/* Price + action */}
+      <div className="mt-auto pt-3 flex items-center justify-between gap-2">
+        <span className="font-display text-[17px] font-extrabold text-text-main leading-none">₹{product.price}</span>
+        {qty === 0 ? (
           <button
             onClick={() => addItem(product)}
-            className="w-9 h-9 flex items-center justify-center text-primary font-medium hover:bg-blue-50 transition-colors text-lg"
+            className="bg-primary text-white font-700 text-sm rounded-btn px-4 min-h-[40px] active:scale-95 transition-transform"
           >
-            +
+            Add
           </button>
-        </div>
-      )}
+        ) : (
+          <div className="flex items-center rounded-btn border border-primary/30 bg-bg-trust">
+            <button
+              onClick={() => updateQty(product._id, qty - 1)}
+              aria-label={`Remove one ${product.name}`}
+              className="w-10 h-10 flex items-center justify-center text-primary text-xl leading-none active:scale-90 transition-transform"
+            >
+              −
+            </button>
+            <span className="w-5 text-center text-sm font-700 text-text-main tabular-nums">{qty}</span>
+            <button
+              onClick={() => addItem(product)}
+              aria-label={`Add one ${product.name}`}
+              className="w-10 h-10 flex items-center justify-center text-primary text-xl leading-none active:scale-90 transition-transform"
+            >
+              +
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

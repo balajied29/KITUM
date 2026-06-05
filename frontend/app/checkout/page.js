@@ -1,86 +1,93 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { createOrder, createPayment, cancelOrder } from '@/lib/api';
-import { useCartStore, useAuthStore } from '@/lib/store';
-import { openRazorpayCheckout } from '@/lib/razorpay';
+import Link from 'next/link';
+import { createOrder, getAddresses } from '@/lib/api';
+import { useCartStore, useAuthStore, useLocationStore } from '@/lib/store';
+import { quote as priceQuote } from '@/lib/pricing';
+import { reverseGeocode } from '@/lib/maps';
 import StepIndicator from '@/components/StepIndicator';
 import AppHeader from '@/components/AppHeader';
-import LOCALITIES from '@/constants/localities';
+import LegalConsent from '@/components/LegalConsent';
+
+const PICK_URL = '/location?mode=select&next=/checkout';
 
 export default function CheckoutPage() {
   const router = useRouter();
   const { user } = useAuthStore();
   const { items, slot, clearCart, totalAmount } = useCartStore();
+  const drop = useLocationStore((s) => s.drop);
+  const setDrop = useLocationStore((s) => s.setDrop);
+  const storeLocality = useLocationStore((s) => s.locality);
 
-  const [address, setAddress] = useState({
-    name:     user?.name  || '',
-    phone:    user?.phone || '',
-    street:   '',
-    landmark: '',
-    locality: '',
-  });
+  const [name, setName]         = useState(user?.name  || '');
+  const [phone, setPhone]       = useState(user?.phone || '');
+  const [flat, setFlat]         = useState('');
+  const [directions, setDirections] = useState('');
+  const [addresses, setAddresses] = useState([]);
   const [paymentMode, setPaymentMode] = useState('upi');
+  const [geoBusy, setGeoBusy] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState('');
 
-  const set       = (field) => (e) => setAddress((a) => ({ ...a, [field]: e.target.value }));
+  // Guards: must be signed in, and must have something in the cart.
+  useEffect(() => {
+    if (!useAuthStore.getState().user) { router.replace('/login?next=/checkout'); return; }
+    if (useCartStore.getState().items.length === 0) router.replace('/order');
+  }, [router]);
+
+  useEffect(() => { if (user) { setName(user.name || ''); setPhone(user.phone || ''); } }, [user]);
+  useEffect(() => { getAddresses().then((res) => setAddresses(res.data.data)).catch(() => {}); }, []);
+
   const cartTotal = totalAmount();
   const slotId    = slot?._id ?? null;
+  const bill      = priceQuote(cartTotal);
+
+  const useCurrentLocation = () => {
+    if (!navigator.geolocation) return;
+    setGeoBusy(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude: lat, longitude: lng } = pos.coords;
+        const address = (await reverseGeocode(lat, lng)) || 'Current location';
+        setDrop({ address, lat, lng, landmark: '' });
+        setGeoBusy(false);
+      },
+      () => setGeoBusy(false),
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
+  const pickSaved = (a) =>
+    setDrop({
+      address: a.address,
+      landmark: a.landmark || '',
+      lat: a.location.coordinates[1],
+      lng: a.location.coordinates[0],
+    });
 
   const handlePlaceOrder = async () => {
-    // Hard guards — all must pass before hitting the API
-    if (!slotId) {
-      setError('Please go back and select a delivery slot.');
-      return;
-    }
-    if (!address.name.trim())   { setError('Full name is required.');       return; }
-    if (!address.phone.trim())  { setError('Phone number is required.');     return; }
-    if (!address.street.trim()) { setError('Street address is required.');   return; }
-    if (!address.locality)      { setError('Locality is required.');         return; }
+    if (!slotId)            { setError('Please go back and select a delivery slot.'); return; }
+    if (!name.trim())       { setError('Full name is required.');         return; }
+    if (!phone.trim())      { setError('Phone number is required.');       return; }
+    if (!drop?.lat)         { setError('Please set your delivery location.'); return; }
     setError('');
     setLoading(true);
 
-    let order = null;
+    // Nothing is charged now — payment is collected at delivery (cash, or UPI at
+    // the door). Just create the order and go to its status screen.
     try {
       const orderRes = await createOrder({
         items: items.map((i) => ({ productId: i.product._id, quantity: i.quantity })),
         slotId,
-        deliveryAddress: address,
+        deliveryAddress: { name, phone, flat, street: drop.address, landmark: drop.landmark || '', directions, locality: storeLocality || '' },
+        coordinates: [drop.lng, drop.lat], // precise [lng, lat] from the map pick / saved address
         paymentMode,
       });
-      order = orderRes.data.data;
-
-      if (paymentMode === 'cod') {
-        clearCart();
-        return router.replace(`/status/${order._id}`);
-      }
-
-      // UPI — open Razorpay
-      const payRes = await createPayment(order._id);
-      const { razorpayOrderId, amount, keyId } = payRes.data.data;
-
-      await openRazorpayCheckout({
-        razorpayOrderId, amount, keyId,
-        name:        address.name,
-        email:       user?.email || '',
-        phone:       address.phone,
-        description: `Order #${order._id.toString().slice(-6).toUpperCase()}`,
-      });
-
-      // Payment succeeded — webhook will confirm; navigate to status
       clearCart();
-      router.replace(`/status/${order._id}`);
+      router.replace(`/status/${orderRes.data.data._id}`);
     } catch (err) {
-      if (err?.message === 'Payment cancelled by user') {
-        // Cancel the order so it doesn't leave a ghost pending record
-        if (order?._id) {
-          cancelOrder(order._id).catch(() => {}); // fire and forget
-        }
-        setError('Payment was cancelled. Your slot has been released — you can try again.');
-      } else {
-        setError(err?.response?.data?.error || 'Something went wrong. Please try again.');
-      }
+      setError(err?.response?.data?.error || 'Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -126,33 +133,91 @@ export default function CheckoutPage() {
         {/* Delivery details */}
         <section className="card mb-4">
           <h2 className="text-xs font-700 text-text-muted uppercase tracking-wide mb-3">Delivery Details</h2>
+
           <div className="flex flex-col gap-3">
             <div>
               <label className="block text-xs font-medium text-text-main mb-1">Full Name</label>
               <input className="input" placeholder="Rilang Tariang"
-                value={address.name} onChange={set('name')} />
+                value={name} onChange={(e) => setName(e.target.value)} />
             </div>
             <div>
               <label className="block text-xs font-medium text-text-main mb-1">Phone Number</label>
               <input className="input" type="tel" placeholder="+91 98765 43210"
-                value={address.phone} onChange={set('phone')} />
+                value={phone} onChange={(e) => setPhone(e.target.value)} />
+            </div>
+          </div>
+
+          {/* Delivery location — same picker as the instant flow */}
+          <div className="flex items-center justify-between mt-4 mb-2">
+            <p className="text-xs font-medium text-text-main">Delivery Location</p>
+            <Link href="/addresses" className="text-xs font-medium text-primary">Manage</Link>
+          </div>
+
+          {addresses.length > 0 && (
+            <div className="flex gap-2 overflow-x-auto pb-2 mb-2 -mx-1 px-1">
+              {addresses.slice(0, 5).map((a) => {
+                const active = drop?.lat === a.location.coordinates[1] && drop?.lng === a.location.coordinates[0];
+                return (
+                  <button key={a._id} onClick={() => pickSaved(a)}
+                    className={`shrink-0 px-3 py-2 rounded-btn border text-left max-w-[160px] transition-colors ${active ? 'border-primary bg-bg-trust' : 'border-border-default bg-white'}`}>
+                    <p className="text-xs font-700 text-text-main truncate">{a.label || a.type}</p>
+                    <p className="text-[10px] text-text-muted truncate">{a.address}</p>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {drop?.lat ? (
+            <div className="rounded-btn border border-border-default p-3">
+              <div className="flex items-start gap-3">
+                <svg className="mt-0.5 shrink-0" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="#0037b0" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <circle cx="12" cy="11" r="3" />
+                </svg>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-text-main leading-snug">{drop.address}</p>
+                  {drop.landmark ? <p className="text-xs text-text-muted mt-0.5">Near {drop.landmark}</p> : null}
+                </div>
+                <button onClick={() => router.push(PICK_URL)} className="text-xs font-700 text-primary shrink-0">Change</button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              <button onClick={() => router.push(PICK_URL)} className="rounded-btn border border-border-default p-3 flex items-center gap-3 text-left">
+                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#0037b0" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                </svg>
+                <div>
+                  <p className="text-sm font-700 text-text-main">Set location on map</p>
+                  <p className="text-xs text-text-muted">Pin your exact delivery spot</p>
+                </div>
+              </button>
+              <button onClick={useCurrentLocation} disabled={geoBusy} className="btn-ghost flex items-center gap-2 self-start text-xs">
+                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 8a4 4 0 100 8 4 4 0 000-8z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 2v3m0 14v3m10-10h-3M5 12H2" />
+                </svg>
+                {geoBusy ? 'Locating…' : 'Use my current location'}
+              </button>
+            </div>
+          )}
+
+          {/* Extra delivery details — help the driver find the exact spot */}
+          <div className="mt-3 flex flex-col gap-3">
+            <div>
+              <label className="block text-xs font-medium text-text-main mb-1">
+                Flat / House / Building <span className="text-text-muted font-normal">(recommended)</span>
+              </label>
+              <input className="input" placeholder="e.g. Flat 3B, Riverdale Apartments"
+                value={flat} onChange={(e) => setFlat(e.target.value)} />
             </div>
             <div>
-              <label className="block text-xs font-medium text-text-main mb-1">Street Address</label>
-              <input className="input" placeholder="House No. 42, Laitumkhrah, near Cathedral Church"
-                value={address.street} onChange={set('street')} />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-text-main mb-1">Landmark (optional)</label>
-              <input className="input" placeholder="e.g. Near St. Edmund's School"
-                value={address.landmark} onChange={set('landmark')} />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-text-main mb-1">Locality</label>
-              <select className="input" value={address.locality} onChange={set('locality')}>
-                <option value="">Select locality</option>
-                {LOCALITIES.map((l) => <option key={l} value={l}>{l}</option>)}
-              </select>
+              <label className="block text-xs font-medium text-text-main mb-1">
+                Directions for the driver <span className="text-text-muted font-normal">(optional)</span>
+              </label>
+              <input className="input" placeholder="e.g. Blue gate, ring the bell twice"
+                value={directions} onChange={(e) => setDirections(e.target.value)} />
             </div>
           </div>
         </section>
@@ -162,11 +227,11 @@ export default function CheckoutPage() {
           <h2 className="text-xs font-700 text-text-muted uppercase tracking-wide mb-3">Payment Method</h2>
           <div className="flex gap-3">
             {[
-              { value: 'upi', label: 'Pay Online (UPI/Card)' },
+              { value: 'upi', label: 'UPI on Delivery' },
               { value: 'cod', label: 'Cash on Delivery' },
             ].map((opt) => (
               <button key={opt.value} onClick={() => setPaymentMode(opt.value)}
-                className={`flex-1 text-xs font-medium py-2.5 rounded-btn border transition-colors ${
+                className={`flex-1 text-xs font-medium py-3 rounded-btn border transition-colors ${
                   paymentMode === opt.value
                     ? 'bg-primary text-white border-primary'
                     : 'bg-white text-text-muted border-border-default hover:border-primary'
@@ -177,28 +242,40 @@ export default function CheckoutPage() {
           </div>
           {paymentMode === 'upi' && (
             <p className="text-[11px] text-text-muted mt-2">
-              You'll be redirected to Razorpay to complete payment securely.
+              Pay securely by UPI when your tanker is delivered — nothing is charged now.
             </p>
           )}
         </section>
 
         {error && <p className="text-red-600 text-xs mb-3">{error}</p>}
 
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <p className="text-xs text-text-muted">Total Amount</p>
-            <p className="text-[11px] text-text-muted">Inclusive of all taxes</p>
+        <div className="card mb-3 text-sm">
+          <div className="flex justify-between py-1">
+            <span className="text-text-muted">Subtotal</span>
+            <span className="text-text-main">₹{bill.fare}</span>
           </div>
-          <p className="text-xl font-700 text-text-main">₹{cartTotal}.00</p>
+          <div className="flex justify-between py-1">
+            <span className="text-text-muted">Platform fee (5%)</span>
+            <span className="text-text-main">₹{bill.platformFee}</span>
+          </div>
+          <div className="flex justify-between py-1.5 border-t border-border-default mt-1 font-700 text-text-main">
+            <span>Total</span>
+            <span>₹{bill.total}</span>
+          </div>
+          <p className="text-[11px] text-text-muted mt-2">
+            No payment now — pay ₹{bill.total} {paymentMode === 'cod' ? 'in cash' : 'by UPI'} on delivery.
+          </p>
         </div>
 
         <button
           onClick={handlePlaceOrder}
           disabled={loading || items.length === 0 || !slotId}
-          className="btn-primary w-full py-3 text-sm disabled:opacity-50"
+          className="btn-primary w-full text-sm disabled:opacity-50"
         >
-          {loading ? 'Processing…' : `Place Order · ₹${cartTotal}`}
+          {loading ? 'Processing…' : `Place Order · ₹${bill.total}`}
         </button>
+
+        <LegalConsent action="placing your order" variant="order" className="mt-3 text-center" />
       </div>
     </main>
   );

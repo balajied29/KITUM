@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { getSlots } from '@/lib/api';
 import { useCartStore, useLocationStore } from '@/lib/store';
+import { SunIcon, CloudSunIcon, MoonIcon } from '@/components/icons';
 
 const toDateString = (date) => date.toISOString().split('T')[0];
 
@@ -15,9 +16,9 @@ const next7Days = () =>
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 const SESSION_META = {
-  Morning:   { icon: '☀️' },
-  Afternoon: { icon: '🌤️' },
-  Evening:   { icon: '🌙' },
+  Morning:   { Icon: SunIcon },
+  Afternoon: { Icon: CloudSunIcon },
+  Evening:   { Icon: MoonIcon },
 };
 
 export default function SlotPicker() {
@@ -80,12 +81,12 @@ export default function SlotPicker() {
         <p className="text-xs text-text-muted py-4 text-center">No slots available for this date.</p>
       ) : (
         <div className="flex flex-col gap-4 mb-4">
-          {grouped.map(({ label, icon, slots: groupSlots }) => {
+          {grouped.map(({ label, Icon, slots: groupSlots }) => {
             if (groupSlots.length === 0) return null;
             return (
               <div key={label}>
                 <div className="flex items-center gap-1.5 mb-2">
-                  <span className="text-sm">{icon}</span>
+                  <Icon className="w-4 h-4 text-primary" />
                   <p className="text-xs font-700 text-text-main">{label}</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -97,7 +98,7 @@ export default function SlotPicker() {
                         key={slot._id}
                         disabled={full}
                         onClick={() => setSlot(slot)}
-                        className={`flex flex-col items-start px-4 py-2.5 rounded-btn border text-xs font-medium transition-colors min-w-[120px] ${
+                        className={`flex flex-col items-start px-4 py-3 rounded-btn border text-xs font-medium transition-colors min-w-[120px] disabled:cursor-not-allowed ${
                           full
                             ? 'bg-bg-card text-text-muted border-border-default cursor-not-allowed opacity-60'
                             : selected
@@ -134,7 +135,7 @@ export default function SlotPicker() {
           <div>
             <p className="text-[10px] font-700 text-accent uppercase tracking-widest mb-1">Delivery Protocol</p>
             <p className="text-[11px] text-text-muted leading-relaxed">
-              KIT UM drivers will contact you 10 minutes prior to arrival. Please ensure someone is available to receive the delivery. Unattended deliveries will be rescheduled for the next available slot.
+              KitUm drivers will contact you 10 minutes prior to arrival. Please ensure someone is available to receive the delivery. Unattended deliveries will be rescheduled for the next available slot.
             </p>
           </div>
         </div>

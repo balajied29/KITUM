@@ -2,11 +2,11 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { login } from '@/lib/api';
-import { useAuthStore } from '@/lib/store';
+import { useAdminAuthStore } from '@/lib/store';
 
 export default function AdminLoginPage() {
   const router = useRouter();
-  const { login: storeLogin } = useAuthStore();
+  const setAuth = useAdminAuthStore((s) => s.setAuth);
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading]   = useState(false);
@@ -18,12 +18,12 @@ export default function AdminLoginPage() {
     setLoading(true);
     try {
       const res = await login(email, password);
-      const { token, user } = res.data.data;
+      const { accessToken, refreshToken, user } = res.data.data;
       if (user.role !== 'admin') {
         setError('Access denied. This account does not have admin privileges.');
         return;
       }
-      storeLogin(token, user);
+      setAuth(user, accessToken, refreshToken);
       router.replace('/admin');
     } catch (err) {
       setError(err?.response?.data?.error || 'Invalid email or password.');
@@ -41,7 +41,7 @@ export default function AdminLoginPage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 2C8 8 5 12 5 15a7 7 0 0014 0c0-3-3-7-7-13z" />
             </svg>
           </div>
-          <span className="text-base font-700 text-text-main">KIT UM Admin</span>
+          <span className="text-base font-700 text-text-main">KitUm Admin</span>
         </div>
 
         <div className="card">

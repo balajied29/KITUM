@@ -7,6 +7,16 @@ node_modules/
 out/
 build/
 
+# Expo (fulfiller app)
+.expo/
+dist/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+.env*.local
+
 # Environment files
 .env
 .env.local

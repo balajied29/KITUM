@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { adminGetOrders, adminUpdateStatus, adminAssignDriver } from '@/lib/api';
+import { adminGetOrders, adminUpdateStatus } from '@/lib/api';
+import AssignDriverModal from '@/components/AssignDriverModal';
 
 const STATUSES = ['pending','confirmed','out_for_delivery','delivered','cancelled'];
 
@@ -22,6 +23,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
   const [dateFilter, setDateFilter] = useState('');
+  const [assignOrder, setAssignOrder] = useState(null);
 
   const fetchOrders = () => {
     setLoading(true);
@@ -108,10 +110,15 @@ export default function AdminDashboard() {
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    <select className="input py-1 text-xs max-w-[150px]" value={o.status}
-                      onChange={(e) => handleStatus(o._id, e.target.value)}>
-                      {STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
-                    </select>
+                    <div className="flex flex-col gap-1.5">
+                      <select className="input py-1 text-xs max-w-[150px]" value={o.status}
+                        onChange={(e) => handleStatus(o._id, e.target.value)}>
+                        {STATUSES.map((s) => <option key={s} value={s}>{s.replace(/_/g,' ')}</option>)}
+                      </select>
+                      <button onClick={() => setAssignOrder(o)} className="text-xs font-medium text-primary text-left hover:underline">
+                        {o.driverAssigned ? `↻ ${o.driverAssigned.name || 'Reassign'}` : '+ Assign partner'}
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -119,6 +126,14 @@ export default function AdminDashboard() {
           </table>
         </div>
       </div>
+
+      {assignOrder && (
+        <AssignDriverModal
+          order={assignOrder}
+          onClose={() => setAssignOrder(null)}
+          onAssigned={fetchOrders}
+        />
+      )}
     </div>
   );
 }

@@ -3,18 +3,15 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { getProducts } from '@/lib/api';
 import { useCartStore } from '@/lib/store';
+import { tankerImage } from '@/lib/tankerImage';
 import StepIndicator from '@/components/StepIndicator';
+import AppHeader from '@/components/AppHeader';
 
-const TIER_LABELS = {
-  default:  'STANDARD',
-  first:    'RESIDENTIAL STANDARD',
-  second:   'HIGH CAPACITY',
-};
-
-function getTierLabel(index) {
-  if (index === 0) return TIER_LABELS.first;
-  if (index === 1) return TIER_LABELS.second;
-  return TIER_LABELS.default;
+// Capacity-based tier tag (stable regardless of list order).
+function getTierLabel(litres = 0) {
+  if (litres >= 2000) return 'HIGH CAPACITY';
+  if (litres >= 1000) return 'RESIDENTIAL STANDARD';
+  return 'COMPACT';
 }
 
 export default function TankerPage() {
@@ -48,7 +45,9 @@ export default function TankerPage() {
   };
 
   return (
-    <main className="px-4 pt-5 pb-28">
+    <main className="pb-2">
+      <AppHeader showLocality={false} />
+      <div className="px-4 pt-5 pb-24">
       <StepIndicator step={1} />
 
       <div className="flex items-center gap-3 mb-5">
@@ -72,14 +71,18 @@ export default function TankerPage() {
         <p className="text-sm text-text-muted py-8 text-center">No tanker products available right now.</p>
       ) : (
         <div className="flex flex-col gap-3 mb-6">
-          {tankers.map((product, i) => {
+          {tankers.map((product) => {
             const qty = getQty(product._id);
+            const img = tankerImage(product.tankerLitres || 0);
             return (
               <div key={product._id} className="card">
                 <p className="text-[10px] font-700 text-text-muted uppercase tracking-widest mb-1">
-                  {getTierLabel(i)}
+                  {getTierLabel(product.tankerLitres || 0)}
                 </p>
                 <div className="flex items-start justify-between gap-3">
+                  {img && (
+                    <img src={img} alt={`${product.tankerLitres}L tanker`} className="w-14 h-14 rounded-lg object-cover shrink-0" />
+                  )}
                   <div className="flex-1">
                     <p className="text-sm font-700 text-text-main">{product.name}</p>
                     <p className="text-xs text-text-muted mt-0.5 leading-relaxed">
@@ -160,7 +163,7 @@ export default function TankerPage() {
 
       {/* Sticky footer */}
       {hasItems && (
-        <div className="fixed bottom-14 left-0 right-0 max-w-lg mx-auto px-4 pb-3">
+        <div className="cta-dock">
           <button
             onClick={() => router.push('/order')}
             className="btn-primary w-full flex items-center justify-between px-4 py-3 text-sm"
@@ -171,6 +174,7 @@ export default function TankerPage() {
           </button>
         </div>
       )}
+      </div>
     </main>
   );
 }

@@ -60,4 +60,40 @@ function sendDelivered(phone, orderId) {
   return sendTemplate(phone, 'order_delivered', [orderId]);
 }
 
-module.exports = { sendOrderConfirmed, sendOutForDelivery, sendDelivered };
+/* ---------- Instant (ride-hailing) flow templates ---------- */
+
+/**
+ * A fulfiller accepted the instant request and is on the way.
+ * @param {string} phone        - customer phone
+ * @param {string} requestId    - short request ID
+ * @param {string} fulfillerName
+ * @param {string} etaMin       - estimated minutes
+ */
+function sendFulfillerAssigned(phone, requestId, fulfillerName, etaMin) {
+  return sendTemplate(phone, 'fulfiller_assigned', [requestId, fulfillerName, String(etaMin)]);
+}
+
+/**
+ * @param {string} phone
+ * @param {string} requestId
+ */
+function sendFulfillerArriving(phone, requestId) {
+  return sendTemplate(phone, 'fulfiller_arriving', [requestId]);
+}
+
+/**
+ * @param {string} phone
+ * @param {string} requestId
+ */
+function sendDeliveryCompleted(phone, requestId) {
+  return sendTemplate(phone, 'delivery_completed', [requestId]);
+}
+
+module.exports = {
+  sendOrderConfirmed,
+  sendOutForDelivery,
+  sendDelivered,
+  sendFulfillerAssigned,
+  sendFulfillerArriving,
+  sendDeliveryCompleted,
+};

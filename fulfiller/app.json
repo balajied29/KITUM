@@ -1,0 +1,78 @@
+{
+  "expo": {
+    "name": "KitUm Partner",
+    "slug": "shillong-water-fulfiller",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "swfulfiller",
+    "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/logo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#263cf2"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.shillongwater.fulfiller",
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "location",
+          "fetch",
+          "remote-notification"
+        ],
+        "NSLocationWhenInUseUsageDescription": "We use your location to receive and fulfil nearby delivery requests.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "We share your live location with the customer while you are delivering."
+      }
+    },
+    "android": {
+      "package": "com.shillongwater.fulfiller",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#263cf2"
+      },
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_LOCATION",
+        "POST_NOTIFICATIONS",
+        "VIBRATE",
+        "WAKE_LOCK"
+      ]
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "isAndroidBackgroundLocationEnabled": true,
+          "locationAlwaysAndWhenInUsePermission": "Allow KitUm Partner to use your location to receive and fulfil nearby delivery requests."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#263cf2",
+          "sounds": ["./assets/alarm.wav"]
+        }
+      ],
+      "expo-audio",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow KitUm Partner to upload photos of your PAN and driver's licence.",
+          "cameraPermission": "Allow KitUm Partner to photograph your PAN and driver's licence."
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": ""
+      }
+    }
+  }
+}

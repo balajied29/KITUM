@@ -5,6 +5,11 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --nav-h: 60px;   /* visual height of the bottom nav bar (excl. safe area) */
+    --app-w: 440px;  /* single phone-column width for the whole app shell */
+  }
+
   *, *::before, *::after {
     box-sizing: border-box;
     margin: 0;
@@ -17,7 +22,7 @@
   }
 
   body {
-    background-color: #faf8ff;
+    background-color: #e6e8ef; /* neutral frame behind the phone-width app column (desktop) */
     color: #131b2e;
     min-height: 100dvh;
   }
@@ -28,11 +33,11 @@
 
 @layer components {
   .btn-primary {
-    @apply bg-primary text-white font-700 px-4 py-2.5 rounded-btn transition-colors hover:bg-primary-hover active:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed text-sm text-center;
+    @apply bg-primary text-white font-700 px-4 py-3 rounded-btn transition-all hover:bg-primary-hover active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary disabled:active:scale-100 text-sm text-center;
   }
 
   .btn-ghost {
-    @apply bg-transparent text-primary font-medium px-4 py-2.5 rounded-btn transition-colors hover:bg-blue-50 active:bg-blue-50 text-sm;
+    @apply bg-transparent text-primary font-medium px-4 py-3 rounded-btn transition-colors hover:bg-blue-50 active:bg-blue-50 text-sm;
   }
 
   .card {
@@ -47,4 +52,81 @@
   .badge-amber  { @apply inline-flex items-center gap-1.5 text-xs font-medium text-amber-700; }
   .badge-red    { @apply inline-flex items-center gap-1.5 text-xs font-medium text-red-600; }
   .badge-blue   { @apply inline-flex items-center gap-1.5 text-xs font-medium text-primary; }
+
+  /* Reserve space below scrollable content so it clears the fixed bottom nav
+     (+ the iOS home-indicator safe area). Put on the app shell once. */
+  .pad-nav { padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px)); }
+
+  /* A floating action bar docked just above the bottom nav, centered to the app
+     column. Pages using it should add ~pb-24 to their content so nothing hides
+     behind it. */
+  .cta-dock {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px));
+    z-index: 40;
+    margin-left: auto;
+    margin-right: auto;
+    max-width: var(--app-w);
+    padding: 0 1rem 0.75rem;
+  }
+
+  /* Circular icon button with a comfortable tap target + press feedback. */
+  .icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    transition: background-color 0.15s ease, transform 0.15s ease;
+  }
+  .icon-btn:active { transform: scale(0.92); }
+
+  /* Readable typography for legal / policy documents (no Tailwind Typography dep). */
+  .prose-legal { @apply text-sm text-text-body leading-relaxed; }
+  .prose-legal > :first-child { margin-top: 0; }
+  .prose-legal h2 {
+    @apply font-display font-bold text-[17px] leading-snug text-text-main mt-8 mb-2 scroll-mt-20;
+  }
+  .prose-legal h3 {
+    @apply font-700 text-[15px] text-text-main mt-5 mb-1.5;
+  }
+  .prose-legal p { @apply my-3; }
+  .prose-legal ul { @apply my-3 pl-5 list-disc marker:text-text-muted; }
+  .prose-legal ol { @apply my-3 pl-5 list-decimal marker:text-text-muted; }
+  .prose-legal li { @apply my-1.5 pl-1; }
+  .prose-legal a { @apply text-primary font-medium underline underline-offset-2 hover:text-primary-hover; }
+  .prose-legal strong { @apply font-700 text-text-main; }
+  .prose-legal table { @apply w-full my-4 text-xs border-collapse; }
+  .prose-legal th { @apply text-left font-700 text-text-main bg-bg-card border border-border-default px-3 py-2 align-top; }
+  .prose-legal td { @apply border border-border-default px-3 py-2 align-top; }
+  /* Callout box for "you must fill this in" / important notices. */
+  .prose-legal .note {
+    @apply block bg-bg-trust border border-primary/20 rounded-card p-4 my-5 text-[13px] text-text-body;
+  }
+  .prose-legal .note strong { @apply text-primary; }
+}
+
+/* Drawer / bottom-sheet entrances (used by the admin sidebar drawer + modals). */
+@keyframes slideIn { from { transform: translateX(-100%); } to { transform: translateX(0); } }
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+/* Track-screen motion: success check, ripple, radar sweep, gentle bob. */
+@keyframes drawCheck { to { stroke-dashoffset: 0; } }
+@keyframes popIn { 0% { transform: scale(.5); opacity: 0; } 60% { transform: scale(1.08); } 100% { transform: scale(1); opacity: 1; } }
+@keyframes ripple { 0% { transform: scale(.7); opacity: .55; } 100% { transform: scale(2.3); opacity: 0; } }
+@keyframes radar { 0% { transform: scale(.5); opacity: .7; } 100% { transform: scale(2.5); opacity: 0; } }
+@keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@keyframes riseUp { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+.animate-pop   { animation: popIn .5s cubic-bezier(.2,.8,.3,1.2) both; }
+.animate-rise  { animation: riseUp .45s ease-out both; }
+.animate-bob   { animation: bob 3s ease-in-out infinite; }
+.check-draw    { stroke-dasharray: 30; stroke-dashoffset: 30; animation: drawCheck .55s ease-out .3s forwards; }
+.ripple-ring   { animation: ripple 1.9s ease-out infinite; }
+.radar-ring    { animation: radar 2s ease-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-pop, .animate-rise, .animate-bob, .check-draw, .ripple-ring, .radar-ring { animation: none; }
+  .check-draw { stroke-dashoffset: 0; }
 }

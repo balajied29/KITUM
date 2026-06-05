@@ -1,0 +1,47 @@
+name: Deploy backend to Azure VM
+
+# Deploys backend/ to the Azure VM over SSH whenever backend code lands on main.
+# Auth is a dedicated SSH deploy key stored in GitHub secrets (VM_SSH_KEY) — the
+# VM equivalent of an App Service "publish profile": one secret, no password.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/deploy-backend.yml'
+  workflow_dispatch: {} # also lets you trigger a deploy by hand from the Actions tab
+
+concurrency:
+  group: deploy-backend # never let two deploys race onto the box
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Load SSH deploy key
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.VM_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "${{ secrets.VM_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Sync backend source to the VM
+        # Copies backend/ -> ~/kitum-backend on the VM. .env and node_modules on
+        # the server are excluded — and rsync protects excluded paths from
+        # --delete, so the server's secrets and installed deps are left intact.
+        run: |
+          rsync -az --delete \
+            --exclude='.env' \
+            --exclude='node_modules/' \
+            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes" \
+            backend/ "${{ secrets.VM_USER }}@${{ secrets.VM_HOST }}:/home/${{ secrets.VM_USER }}/kitum-backend/"
+
+      - name: Install prod deps and reload the app
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes \
+            "${{ secrets.VM_USER }}@${{ secrets.VM_HOST }}" \
+            'set -e; cd ~/kitum-backend && npm ci --omit=dev && pm2 startOrReload ecosystem.config.js --update-env && pm2 save'

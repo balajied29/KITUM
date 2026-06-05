@@ -1,18 +1,29 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { register, login } from '@/lib/api';
 import { useAuthStore } from '@/lib/store';
+import LegalConsent from '@/components/LegalConsent';
+
+// Read ?next without useSearchParams (avoids a Suspense boundary requirement).
+const nextDest = () =>
+  (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('next')) || '/';
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login: storeLogin } = useAuthStore();
+  const setAuth = useAuthStore((s) => s.setAuth);
   const [mode, setMode]       = useState('signin'); // 'signin' | 'signup'
   const [name, setName]       = useState('');
   const [email, setEmail]     = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState('');
+
+  // Already signed in? Skip the form.
+  useEffect(() => {
+    if (useAuthStore.getState().user) router.replace(nextDest());
+  }, [router]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -22,9 +33,9 @@ export default function LoginPage() {
       const res = mode === 'signup'
         ? await register(name, email, password)
         : await login(email, password);
-      const { token, user } = res.data.data;
-      storeLogin(token, user);
-      router.replace('/');
+      const { accessToken, refreshToken, user } = res.data.data;
+      setAuth(user, accessToken, refreshToken);
+      router.replace(nextDest());
     } catch (err) {
       setError(err?.response?.data?.error || 'Something went wrong. Please try again.');
     } finally {
@@ -42,7 +53,7 @@ export default function LoginPage() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 2C8 8 5 12 5 15a7 7 0 0014 0c0-3-3-7-7-13z" />
             </svg>
           </div>
-          <h1 className="text-2xl font-700 text-text-main">KIT UM</h1>
+          <h1 className="text-2xl font-700 text-text-main">KitUm</h1>
           <p className="text-text-muted text-sm mt-1">
             {mode === 'signin' ? 'Sign in to your account.' : 'Create a new account.'}
           </p>
@@ -88,11 +99,23 @@ export default function LoginPage() {
             />
           </div>
 
+          {mode === 'signin' && (
+            <Link href="/forgot-password" className="text-primary text-xs font-medium hover:underline self-end -mt-2">
+              Forgot password?
+            </Link>
+          )}
+
           {error && <p className="text-red-600 text-xs">{error}</p>}
 
           <button type="submit" disabled={loading} className="btn-primary w-full">
             {loading ? (mode === 'signup' ? 'Creating account…' : 'Signing in…') : (mode === 'signup' ? 'Sign Up' : 'Sign In')}
           </button>
+
+          <LegalConsent
+            action={mode === 'signup' ? 'creating an account' : 'signing in'}
+            variant="auth"
+            className="text-center"
+          />
         </form>
 
         <p className="text-center text-sm text-text-muted mt-5">
