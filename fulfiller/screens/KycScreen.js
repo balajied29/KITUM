@@ -4,12 +4,10 @@ import {
   Text,
   Image,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   Alert,
-  KeyboardAvoidingView,
-  Platform,
 } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { colors, spacing, radius, type } from '../lib/theme';
@@ -157,8 +155,13 @@ export default function KycScreen({ user, onBack }) {
   return (
     <SafeAreaView edges={['top']} style={styles.root}>
       <Header title="Verification" onBack={onBack} />
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+      <KeyboardAwareScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={styles.scroll}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        bottomOffset={24}
+      >
           {/* Status banner */}
           <Card style={[styles.banner, { backgroundColor: t.bg, borderColor: 'transparent' }]}>
             <Icon name={s.icon} size={24} color={t.fg} />
@@ -196,8 +199,7 @@ export default function KycScreen({ user, onBack }) {
             style={{ marginTop: spacing.sm }}
           />
           <Text style={styles.privacy}>Your documents are stored securely and used only to verify your account.</Text>
-        </ScrollView>
-      </KeyboardAvoidingView>
+      </KeyboardAwareScrollView>
     </SafeAreaView>
   );
 }

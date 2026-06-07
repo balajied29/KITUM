@@ -1,6 +1,7 @@
 import 'react-native-gesture-handler';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
 
 import { DriverSessionProvider } from './providers/DriverSessionProvider';
 import Root from './navigation/RootNavigator';
@@ -12,11 +13,13 @@ import Root from './navigation/RootNavigator';
 export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider>
-        <DriverSessionProvider>
-          <Root />
-        </DriverSessionProvider>
-      </SafeAreaProvider>
+      <KeyboardProvider>
+        <SafeAreaProvider>
+          <DriverSessionProvider>
+            <Root />
+          </DriverSessionProvider>
+        </SafeAreaProvider>
+      </KeyboardProvider>
     </GestureHandlerRootView>
   );
 }

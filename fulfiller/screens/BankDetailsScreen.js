@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, Alert } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, spacing, radius, type } from '../lib/theme';
 import { Header, Card, Input, Button, SectionLabel } from '../components/ui';
@@ -47,8 +48,13 @@ export default function BankDetailsScreen({ user, onBack }) {
   return (
     <SafeAreaView edges={['top']} style={styles.root}>
       <Header title="Settlement details" onBack={onBack} />
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+      <KeyboardAwareScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={styles.scroll}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        bottomOffset={24}
+      >
           <View style={styles.note}>
             <Icon name="shield" size={16} color={colors.primary} />
             <Text style={styles.noteText}>
@@ -70,8 +76,7 @@ export default function BankDetailsScreen({ user, onBack }) {
           </Card>
 
           <Button label="Save details" icon="check" loading={saving} onPress={save} style={{ marginTop: spacing.xl }} />
-        </ScrollView>
-      </KeyboardAvoidingView>
+      </KeyboardAwareScrollView>
     </SafeAreaView>
   );
 }

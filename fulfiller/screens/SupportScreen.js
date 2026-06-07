@@ -7,11 +7,10 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
-  KeyboardAvoidingView,
-  Platform,
   ActivityIndicator,
   Linking,
 } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, spacing, radius, type } from '../lib/theme';
 import { Header, Card, Input, Button, SectionLabel, MenuRow, Pill } from '../components/ui';
@@ -149,8 +148,13 @@ function NewRequest({ user, template, onBack, onCreated }) {
   return (
     <SafeAreaView edges={['top']} style={styles.root}>
       <Header title="New request" onBack={onBack} />
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+      <KeyboardAwareScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={styles.scroll}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        bottomOffset={24}
+      >
           {!!template?.label && (
             <View style={styles.topicTag}>
               <Icon name="tag" size={13} color={colors.primary} />
@@ -175,8 +179,7 @@ function NewRequest({ user, template, onBack, onCreated }) {
           </Card>
           <Button label="Submit request" icon="send" loading={busy} onPress={submit} style={{ marginTop: spacing.xl }} />
           <Text style={styles.helpNote}>Our team usually replies within a few hours. You’ll see replies here in the app.</Text>
-        </ScrollView>
-      </KeyboardAvoidingView>
+      </KeyboardAwareScrollView>
     </SafeAreaView>
   );
 }
