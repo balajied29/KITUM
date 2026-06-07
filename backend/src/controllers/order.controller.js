@@ -5,9 +5,11 @@ const { sendOrderConfirmed } = require('../services/whatsapp');
 const geo = require('../services/geo');
 const payments = require('../services/payments');
 const pricing = require('../shared/pricing');
+const promotions = require('../services/promotions');
 const localities = require('../shared/localities');
 
 const createOrder = async (req, res) => {
+  let feeWaived = false; // a customer free booking reserved (credited back if create fails)
   try {
     const { items, slotId, deliveryAddress, paymentMode, coordinates } = req.body;
 
@@ -46,7 +48,10 @@ const createOrder = async (req, res) => {
       if (product.tankerLitres > requiredLitres) requiredLitres = product.tankerLitres;
     }
 
-    const q = pricing.quote(fareSubtotal);
+    // Launch offer: atomically reserve a free booking (waives the platform fee).
+    // Placed after all validations so an early return never leaks a reservation.
+    feeWaived = await promotions.reserveFreeBooking(req.user._id);
+    const q = pricing.quote(fareSubtotal, { waivePlatformFee: feeWaived });
 
     // Scheduled-matching fields (docs/scheduled-dispatch.md §Phase A). Cheap fields
     // are computed inline; the geocode is best-effort (geo.geocode fails soft → null).
@@ -90,6 +95,7 @@ const createOrder = async (req, res) => {
       platformFee:       q.platformFee,
       partnerCommission: q.partnerCommission,
       partnerPayout:     q.partnerPayout,
+      feeWaived,
       status:            'confirmed',
       paymentStatus:     'unpaid',
       slotReserved:      true,
@@ -103,6 +109,8 @@ const createOrder = async (req, res) => {
 
     res.status(201).json({ success: true, data: order });
   } catch (err) {
+    // The order never persisted — give the reserved free booking back.
+    if (feeWaived) await promotions.creditFreeBooking(req.user._id).catch(() => {});
     res.status(500).json({ success: false, error: 'Failed to create order' });
   }
 };
@@ -135,40 +143,51 @@ const cancelOrder = async (req, res) => {
       return res.status(400).json({ success: false, error: 'Order cannot be cancelled at this stage' });
     }
 
-    // Release capacity only if this order actually holds a reservation — otherwise
-    // a payment that landed after the slot filled (slotReserved:false) would drive
-    // currentBooked negative.
-    if (order.slotReserved) {
-      await SlotConfig.findByIdAndUpdate(order.slotId, { $inc: { currentBooked: -1 } });
+    // Atomically CLAIM the cancellation on the still-cancellable states. If a concurrent
+    // admin delivery/cancel won the race, bail with NO side effects — otherwise we'd
+    // release a slot, refund, or restore a free booking against an order that actually
+    // completed (mirrors the guarded DeliveryRequest cancel in DispatchManager).
+    const updated = await Order.findOneAndUpdate(
+      { _id: req.params.id, userId: req.user._id, status: { $in: ['pending', 'confirmed'] } },
+      {
+        status: 'cancelled',
+        $push: { statusLog: { status: 'cancelled', changedAt: new Date(), changedBy: req.user._id } },
+      },
+      { new: true }
+    );
+    if (!updated) {
+      return res.status(409).json({ success: false, error: 'Order cannot be cancelled at this stage' });
     }
 
-    const set = {
-      status: 'cancelled',
-      $push: { statusLog: { status: 'cancelled', changedAt: new Date(), changedBy: req.user._id } },
-    };
+    // Side effects — only now that WE own the cancellation. Release the slot if this
+    // order held a reservation (the atomic claim guarantees this runs at most once).
+    if (updated.slotReserved) {
+      await SlotConfig.findByIdAndUpdate(updated.slotId, { $inc: { currentBooked: -1 } });
+    }
 
-    // Staged refund of what was paid online (prepaid total / COD ₹99 advance),
-    // non-linear by time remaining until the slot. (KitUm-side failures refund in
-    // full elsewhere; this is a customer-initiated cancellation.)
-    const onlinePaid =
-      order.paymentStatus === 'paid' ? order.totalAmount
-      : order.paymentStatus === 'advance_paid' ? order.advance
-      : 0;
-    if (onlinePaid > 0 && order.razorpayPaymentId) {
-      const slot = await SlotConfig.findById(order.slotId).lean().catch(() => null);
-      const startMs = slotStartMs(slot);
-      const hoursToSlot = startMs != null ? (startMs - Date.now()) / 3600000 : null;
-      const refund = pricing.refundAmount(onlinePaid, pricing.scheduledRefundFraction(hoursToSlot));
-      if (refund > 0) {
-        const ok = await payments.refund(order.razorpayPaymentId, refund);
+    // Pay-at-completion: a cancellable order is normally unpaid. If it was paid online,
+    // refund in full — atomically claiming paymentStatus paid→refunded so concurrent
+    // paths can never double-refund the same payment.
+    if (updated.paymentStatus === 'paid' && updated.totalAmount > 0 && updated.razorpayPaymentId) {
+      const claimed = await Order.findOneAndUpdate(
+        { _id: updated._id, paymentStatus: 'paid' },
+        { paymentStatus: 'refunded', refundedAmount: updated.totalAmount },
+        { new: true }
+      ).catch(() => null);
+      if (claimed) {
+        const ok = await payments.refund(updated.razorpayPaymentId, updated.totalAmount);
         if (ok) {
-          set.paymentStatus = 'refunded';
-          set.refundedAmount = refund;
+          updated.paymentStatus = 'refunded';
+          updated.refundedAmount = updated.totalAmount;
+        } else {
+          // Gateway failed — release the claim so a later attempt can retry.
+          await Order.updateOne({ _id: updated._id }, { paymentStatus: 'paid', refundedAmount: 0 }).catch(() => {});
         }
       }
     }
 
-    const updated = await Order.findByIdAndUpdate(order._id, set, { new: true });
+    // Order didn't complete — give any reserved free booking back (idempotent).
+    await promotions.restoreFreeBooking(updated, 'order');
     res.json({ success: true, data: updated });
   } catch (err) {
     res.status(500).json({ success: false, error: 'Failed to cancel order' });

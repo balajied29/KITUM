@@ -71,6 +71,8 @@ mongoose
     server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
     // Re-queue any requests left mid-search by a previous restart.
     dispatch.recover();
+    // Ensure the launch-offer campaigns exist (idempotent; admin tunes them live).
+    require('./services/promotions').seedCampaigns();
   })
   .catch((err) => console.error(err));
 

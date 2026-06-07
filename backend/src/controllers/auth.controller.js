@@ -3,8 +3,14 @@ const bcrypt = require('bcryptjs');
 const User = require('../models/User.model');
 const tokens = require('../services/tokens');
 const storage = require('../services/storage');
+const promotions = require('../services/promotions');
 const { sendPasswordResetEmail } = require('../services/mailer');
 const { canAuthenticate } = require('../middleware/auth.middleware');
+const Address = require('../models/Address.model');
+const Order = require('../models/Order.model');
+const DeliveryRequest = require('../models/DeliveryRequest.model');
+const SupportTicket = require('../models/SupportTicket.model');
+const { REQUEST_STATUS } = require('../shared/constants');
 
 // multipart image mimetype → file extension (for the signup selfie).
 const MIME_EXT = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/heic': 'heic', 'image/heif': 'heif' };
@@ -43,8 +49,13 @@ const register = async (req, res) => {
       user = await User.create({ name, email, password: hashed });
     }
 
+    // Launch offer: enroll new customers into the first-K-bookings-free perk
+    // (idempotent — claimSlot no-ops if they already hold a grant or the cap is full).
+    await promotions.grantCustomerPerk(user._id).catch(() => {});
+    const fresh = await User.findById(user._id);
+
     const pair = await tokens.issuePair(user._id);
-    res.status(201).json({ success: true, data: { ...pair, user: sanitize(user) } });
+    res.status(201).json({ success: true, data: { ...pair, user: sanitize(fresh || user) } });
   } catch (err) {
     res.status(500).json({ success: false, error: 'Registration failed. Please try again.' });
   }
@@ -243,4 +254,106 @@ const resetPassword = async (req, res) => {
   }
 };
 
-module.exports = { register, login, refresh, logout, getMe, updateMe, forgotPassword, resetPassword, partnerSignup };
+/**
+ * Self-service account deletion — DPDP Act 2023 §12 (right to erasure) and the
+ * Google Play account-deletion requirement. We:
+ *   1. refuse while a delivery is in flight (erasure may be deferred where data is
+ *      still needed for an ongoing service);
+ *   2. purge sensitive documents (selfie, PAN, licence) from private storage;
+ *   3. revoke every session;
+ *   4. hard-delete records that exist only for this user (saved addresses);
+ *   5. SCRUB personal data from records we must retain for tax/dispute reasons
+ *      (orders, delivery requests, support) — keeping the financial record, removing PII;
+ *   6. anonymise the User row itself (kept only as an FK target for the scrubbed
+ *      records) and mark it deletedAt so it can never authenticate again.
+ */
+const TERMINAL_REQ = [REQUEST_STATUS.COMPLETED, REQUEST_STATUS.CANCELLED, REQUEST_STATUS.NO_FULFILLER];
+const ACTIVE_ORDER = ['pending', 'confirmed', 'out_for_delivery'];
+
+const deleteMe = async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ success: false, error: 'User not found.' });
+
+    const uid = user._id;
+    const fp = user.fulfillerProfile || {};
+
+    // 1) Refuse while a transaction is in flight.
+    if (user.role === 'fulfiller') {
+      const onJob = fp.currentRequestId || (await DeliveryRequest.exists({ fulfillerId: uid, status: { $nin: TERMINAL_REQ } }));
+      if (onJob)
+        return res.status(409).json({ success: false, error: 'Finish or release your active delivery before deleting your account.' });
+    } else {
+      const [activeOrder, activeReq] = await Promise.all([
+        Order.exists({ userId: uid, status: { $in: ACTIVE_ORDER } }),
+        DeliveryRequest.exists({ customerId: uid, status: { $nin: TERMINAL_REQ } }),
+      ]);
+      if (activeOrder || activeReq)
+        return res.status(409).json({ success: false, error: 'You have a delivery in progress. Please wait until it completes before deleting your account.' });
+    }
+
+    // 2) Purge sensitive documents from private storage (best-effort; never throws).
+    if (storage.isConfigured()) {
+      await Promise.all(
+        [fp.photoKey, fp.kyc?.panKey, fp.kyc?.dlFrontKey, fp.kyc?.dlBackKey].filter(Boolean).map((k) => storage.deleteObject(k))
+      );
+    }
+
+    // 3) Revoke every session.
+    await tokens.revokeAllForUser(uid);
+
+    // 4) + 5) Delete user-only records; scrub PII from retained transactional records.
+    const REDACT = '[deleted]';
+    await Promise.all([
+      Address.deleteMany({ userId: uid }),
+      SupportTicket.updateMany({ userId: uid }, { $set: { contactPhone: null } }),
+      Order.updateMany(
+        { userId: uid },
+        {
+          $set: { 'delivery.name': REDACT, 'delivery.phone': null, 'delivery.address': REDACT, 'delivery.landmark': null, 'delivery.directions': null },
+          $unset: { 'delivery.coordinates': '' },
+        }
+      ),
+      DeliveryRequest.updateMany(
+        { customerId: uid },
+        { $set: { 'drop.name': REDACT, 'drop.phone': null, 'drop.address': REDACT, 'drop.landmark': null, 'drop.directions': null } }
+      ),
+    ]);
+
+    // 6) Anonymise the User row. Email → unique tombstone (the unique index holds,
+    //    and the address is erased); password → an unusable random hash.
+    const set = {
+      email: `deleted+${uid}@deleted.kitum.invalid`,
+      name: 'Deleted user',
+      phone: null,
+      locality: null,
+      password: await bcrypt.hash(crypto.randomBytes(24).toString('hex'), 10),
+      isActive: false,
+      deletedAt: new Date(),
+      resetTokenHash: null,
+      resetExpiresAt: null,
+    };
+    const unset = {};
+    if (user.role === 'fulfiller') {
+      set['fulfillerProfile.isOnline'] = false;
+      set['fulfillerProfile.isAvailable'] = false;
+      Object.assign(unset, {
+        'fulfillerProfile.photoKey': '',
+        'fulfillerProfile.expoPushToken': '',
+        'fulfillerProfile.kyc': '',
+        'fulfillerProfile.bank': '',
+        'fulfillerProfile.currentLocation': '',
+        'fulfillerProfile.basePoint': '',
+        'fulfillerProfile.currentRequestId': '',
+      });
+    }
+    await User.updateOne({ _id: uid }, { $set: set, ...(Object.keys(unset).length ? { $unset: unset } : {}) });
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('deleteMe failed:', err);
+    res.status(500).json({ success: false, error: 'Could not delete your account. Please try again.' });
+  }
+};
+
+module.exports = { register, login, refresh, logout, getMe, updateMe, deleteMe, forgotPassword, resetPassword, partnerSignup };

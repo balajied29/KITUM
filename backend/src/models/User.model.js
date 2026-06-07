@@ -38,6 +38,11 @@ const fulfillerProfileSchema = new mongoose.Schema(
     // dispatch watchdog). Repeat offenders can be deprioritised / reviewed.
     noShowCount: { type: Number, default: 0 },
 
+    // Launch offer (founding partner): 0% commission until this date (set on approval).
+    // Resolved per-driver at assignment in DispatchManager — see services/promotions.js.
+    commissionWaiverUntil: { type: Date, default: null },
+    commissionWaiverNo: { type: Number, default: null }, // "you were the Nth founding partner"
+
     /* ----- Scheduled-flow service area + capacity (docs/scheduled-dispatch.md) ----- */
     // Locality ids (from shared/localities.js) this operator will serve for
     // SCHEDULED bookings. Empty ⇒ not eligible for any scheduled order yet.
@@ -139,6 +144,11 @@ const userSchema = new mongoose.Schema(
     resetTokenHash: { type: String, default: null },
     resetExpiresAt: { type: Date, default: null },
 
+    // Set when the user erases their account (DPDP §12). The row is kept only as an
+    // anonymised FK target for retained transactional records; it can never
+    // authenticate again (see canAuthenticate in auth.middleware).
+    deletedAt: { type: Date, default: null },
+
     // Customer accountability (no upfront payment, so we deter abuse instead of
     // pre-charging): cancellations after a driver was assigned + no-show deliveries.
     // Past a threshold the customer is temporarily blocked from booking.
@@ -146,6 +156,15 @@ const userSchema = new mongoose.Schema(
     bookingBlockedUntil: { type: Date, default: null },
     // Times this customer was unreachable at the drop after a driver arrived.
     customerNoShowCount: { type: Number, default: 0 },
+
+    // Launch offer (early customers): platform fee waived on the first K bookings.
+    // freeBookingsRemaining is the hot counter; reserved at booking, restored if it
+    // doesn't complete (see services/promotions.js). 0 ⇒ no active perk.
+    customerPerks: {
+      freeBookingsRemaining: { type: Number, default: 0 },
+      freeBookingsUntil: { type: Date, default: null }, // optional use-by (null = no expiry)
+      enrollmentNo: { type: Number, default: null },
+    },
     // Only populated for role === 'fulfiller'.
     fulfillerProfile: {
       type: fulfillerProfileSchema,

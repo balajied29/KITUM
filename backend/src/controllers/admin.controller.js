@@ -8,6 +8,8 @@ const { sendOutForDelivery, sendDelivered } = require('../services/whatsapp');
 const push = require('../services/push');
 const bestFit = require('../services/scheduled/bestFit');
 const storage = require('../services/storage');
+const promotions = require('../services/promotions');
+const { partnerSplit } = require('../shared/pricing');
 
 // Orders
 const getAllOrders = async (req, res) => {
@@ -61,6 +63,12 @@ const updateOrderStatus = async (req, res) => {
     ).populate('userId', 'phone');
 
     if (!order) return res.status(404).json({ success: false, error: 'Order not found' });
+
+    // Launch offer: admin-cancelling is a terminal non-completion → give the reserved
+    // free booking back (idempotent via the feeWaiverRestored one-way flag).
+    if (status === 'cancelled' && order.feeWaived) {
+      await promotions.restoreFreeBooking(order, 'order').catch(() => {});
+    }
 
     // WhatsApp — fire and forget
     const phone = order.userId?.phone;
@@ -126,7 +134,7 @@ const assignDriver = async (req, res) => {
 
     // Must be a real, active fulfiller.
     const driver = await User.findOne({ _id: driverId, role: 'fulfiller', isActive: true })
-      .select('name phone fulfillerProfile.vehicleNumber fulfillerProfile.expoPushToken');
+      .select('name phone fulfillerProfile.vehicleNumber fulfillerProfile.expoPushToken fulfillerProfile.commissionWaiverUntil');
     if (!driver) return res.status(400).json({ success: false, error: 'That partner is not an active fulfiller.' });
 
     const current = await Order.findById(req.params.id).populate('slotId', 'date slotLabel startTime endTime');
@@ -134,6 +142,12 @@ const assignDriver = async (req, res) => {
     if (['delivered', 'cancelled'].includes(current.status)) {
       return res.status(400).json({ success: false, error: `Order is already ${current.status}.` });
     }
+
+    // Founding-partner offer: resolve the 0%-commission waiver against THIS driver and
+    // persist the split (orders are quoted with standard commission before a driver is
+    // known). Always recompute so a re-assignment to/from a waived driver can't leave a
+    // stale commission. Customer total (totalAmount/platformFee) is unaffected.
+    const split = partnerSplit(current.fare, promotions.isCommissionWaived(driver));
 
     // Atomic — guarded so a just-delivered/cancelled order can't be claimed under us.
     const order = await Order.findOneAndUpdate(
@@ -144,6 +158,8 @@ const assignDriver = async (req, res) => {
           assignmentStatus: 'assigned',
           assignedAt: new Date(),
           startBy: current.slotId?.date,
+          partnerCommission: split.partnerCommission,
+          partnerPayout: split.partnerPayout,
         },
         $push: { statusLog: { status: 'assigned', changedAt: new Date(), changedBy: req.user._id } },
       },
@@ -312,7 +328,11 @@ const approveFulfiller = async (req, res) => {
       { new: true }
     ).select('-password');
     if (!user) return res.status(404).json({ success: false, error: 'Partner not found' });
-    res.json({ success: true, data: user });
+    // Launch offer: enroll the first N approved partners into the 0%-commission perk
+    // (idempotent — no-ops past the cap or if already enrolled). Clock starts now.
+    await promotions.grantDriverWaiver(user._id, new Date()).catch(() => {});
+    const fresh = await User.findById(user._id).select('-password');
+    res.json({ success: true, data: fresh || user });
   } catch (err) {
     res.status(500).json({ success: false, error: 'Failed to approve partner' });
   }

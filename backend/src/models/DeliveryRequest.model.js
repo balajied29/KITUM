@@ -75,6 +75,8 @@ const deliveryRequestSchema = new mongoose.Schema(
       platformFee: { type: Number }, // 5% surcharge (KitUm revenue)
       partnerCommission: { type: Number }, // 5% of fare, kept by KitUm
       partnerPayout: { type: Number }, // fare − commission — what the partner earns
+      feeWaived: { type: Boolean, default: false }, // launch offer: platform fee waived (a free booking was reserved)
+      feeWaiverRestored: { type: Boolean, default: false }, // reserved free booking given back (didn't complete)
       dryRunFee: { type: Number, default: 0 }, // driver's earning if this ends as a customer no-show
       distanceKm: { type: Number },
       etaMin: { type: Number },

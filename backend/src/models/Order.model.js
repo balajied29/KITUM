@@ -173,6 +173,8 @@ const orderSchema = new mongoose.Schema(
     platformFee: { type: Number }, // 5% surcharge (KitUm revenue)
     partnerCommission: { type: Number }, // 5% of fare, kept by KitUm
     partnerPayout: { type: Number }, // fare − commission — what the partner earns
+    feeWaived: { type: Boolean, default: false }, // launch offer: platform fee waived (a free booking was reserved)
+    feeWaiverRestored: { type: Boolean, default: false }, // reserved free booking given back (order didn't complete)
   },
   { timestamps: true }
 );

@@ -9,6 +9,7 @@ const User = require('../models/User.model');
  */
 const canAuthenticate = (user) =>
   !!user &&
+  !user.deletedAt && // an erased account can never hold a session again
   (user.isActive || (user.role === 'fulfiller' && user.fulfillerProfile?.applicationStatus === 'pending'));
 
 /**

@@ -28,6 +28,13 @@ const {
   adminUpdateTicketStatus,
 } = require('../controllers/support.controller');
 const { adminListReviews, adminSetReviewStatus } = require('../controllers/review.controller');
+const {
+  listCampaigns,
+  updateCampaign,
+  listGrants,
+  grantToUser,
+  revokeGrant,
+} = require('../controllers/campaign.controller');
 
 router.use(protect, adminOnly);
 
@@ -64,5 +71,12 @@ router.patch('/tickets/:id/status', adminUpdateTicketStatus);
 // Reviews (moderation)
 router.get('/reviews', adminListReviews);
 router.patch('/reviews/:id/status', adminSetReviewStatus);
+
+// Launch-offer campaigns (acquisition phase) — see docs/launch-offers-design.md
+router.get('/campaigns', listCampaigns);
+router.patch('/campaigns/:key', updateCampaign);
+router.get('/campaigns/:key/grants', listGrants);
+router.post('/campaigns/:key/grant', grantToUser);
+router.post('/campaigns/:key/revoke', revokeGrant);
 
 module.exports = router;

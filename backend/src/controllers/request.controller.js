@@ -3,6 +3,7 @@ const Product = require('../models/Product.model');
 const User = require('../models/User.model');
 const dispatch = require('../services/dispatch/DispatchManager');
 const pricing = require('../shared/pricing');
+const promotions = require('../services/promotions');
 const { REQUEST_STATUS } = require('../shared/constants');
 
 /** Pull the litre capacity out of a product's `unit` string ("1000 Litres" → 1000). */
@@ -13,6 +14,7 @@ function parseLitres(unit) {
 
 /** Create an instant on-demand request and kick off dispatch. */
 const createRequest = async (req, res) => {
+  let feeWaived = false; // a customer free booking reserved (credited back if create fails)
   try {
     const { productId, quantity = 1, dropLocation, paymentMode = 'cod' } = req.body;
 
@@ -40,7 +42,9 @@ const createRequest = async (req, res) => {
 
     const capacityLitres = parseLitres(product.unit);
     const fare = product.price * quantity;
-    const q = pricing.quote(fare);
+    // Launch offer: atomically reserve a free booking (waives the platform fee).
+    feeWaived = await promotions.reserveFreeBooking(req.user._id);
+    const q = pricing.quote(fare, { waivePlatformFee: feeWaived });
 
     // Nothing is charged at booking — payment is collected at completion (cash, or
     // UPI at the door). So both methods dispatch immediately.
@@ -65,6 +69,7 @@ const createRequest = async (req, res) => {
         platformFee: q.platformFee,
         partnerCommission: q.partnerCommission,
         partnerPayout: q.partnerPayout,
+        feeWaived,
       },
       paymentMode,
       status: REQUEST_STATUS.SEARCHING,
@@ -74,6 +79,8 @@ const createRequest = async (req, res) => {
     dispatch.dispatch(request);
     res.status(201).json({ success: true, data: request });
   } catch (err) {
+    // The request never persisted — give the reserved free booking back.
+    if (feeWaived) await promotions.creditFreeBooking(req.user._id).catch(() => {});
     res.status(500).json({ success: false, error: 'Failed to create request' });
   }
 };

@@ -23,7 +23,8 @@ const geo = require('../geo');
 const push = require('../push');
 const whatsapp = require('../whatsapp');
 const payments = require('../payments');
-const { DRY_RUN_FEE } = require('../../shared/pricing');
+const promotions = require('../promotions');
+const { DRY_RUN_FEE, partnerSplit } = require('../../shared/pricing');
 
 // Customer accountability — no money is taken upfront, so repeated cancellations
 // after a driver commits earn a strike; past the threshold the customer is blocked
@@ -137,6 +138,7 @@ async function findCandidates(request, radiusKm, exclude) {
         pushToken: d.fulfillerProfile?.expoPushToken,
         coordinates: d.fulfillerProfile?.currentLocation?.coordinates, // [lng, lat]
         connected: emit.isFulfillerConnected(String(d._id)),
+        commissionWaived: promotions.isCommissionWaived(d), // founding-partner offer → keeps 100%
       }))
       .sort((a, b) => Number(b.connected) - Number(a.connected));
   } catch {
@@ -182,7 +184,8 @@ function sendOffer(state, candidate, expiresAt) {
     size: request.capacityLitres,
     quantity: request.quantity,
     amount: request.pricing?.amount, // customer grand total (back-compat)
-    payout: request.pricing?.partnerPayout, // what the partner earns (net of commission)
+    // Founding-partner offer keeps 100% of the fare — show THIS driver's payout.
+    payout: candidate.commissionWaived ? request.pricing?.fare : request.pricing?.partnerPayout,
     collect: request.paymentMode === 'cod' ? request.pricing?.amount : 0, // CASH to collect at the door (0 if paying by UPI)
     paymentMode: request.paymentMode,
     drop: {
@@ -330,6 +333,21 @@ async function finalizeAssignment(request, fid) {
     User.findById(fid).lean(),
     User.findById(request.customerId).lean(),
   ]);
+
+  // Founding-partner offer: the assigned driver may keep 100%. The request was quoted
+  // with standard commission before a driver was known, so resolve against THIS driver
+  // and persist the split — earnings/history + the job card then read the right payout.
+  if (promotions.isCommissionWaived(fulfiller)) {
+    const split = partnerSplit(request.pricing?.fare, true);
+    await DeliveryRequest.updateOne(
+      { _id: requestId },
+      { 'pricing.partnerCommission': split.partnerCommission, 'pricing.partnerPayout': split.partnerPayout }
+    ).catch(() => {});
+    if (request.pricing) {
+      request.pricing.partnerCommission = split.partnerCommission;
+      request.pricing.partnerPayout = split.partnerPayout;
+    }
+  }
 
   // Both parties join the request room for live status + location.
   emit.joinRoom(rooms.fulfiller(fid), rooms.request(requestId));
@@ -549,6 +567,7 @@ async function handleCustomerNoShow(fid, requestId, opts = {}) {
 
   await freeFulfiller(fid);
   emit.leaveRoom(rooms.fulfiller(fid), rooms.request(requestId));
+  await promotions.restoreFreeBooking(updated, 'request'); // no delivery happened → give the freebie back
   // Count it for analytics AND feed the booking-block accountability — a no-show is
   // at least as serious as a late cancel, so it earns a strike toward a restriction.
   await User.updateOne({ _id: updated.customerId }, { $inc: { customerNoShowCount: 1 } }).catch(() => {});
@@ -672,6 +691,7 @@ async function handleCustomerCancel(customerId, requestId) {
       requestId: String(requestId),
       status: REQUEST_STATUS.EXPIRED,
     });
+    await promotions.restoreFreeBooking(request, 'request');
     return;
   }
 
@@ -689,6 +709,7 @@ async function handleCustomerCancel(customerId, requestId) {
     ).catch(() => null);
     if (!expired) return; // raced into assignment — leave it
     await maybeRefund(expired); // no driver had committed → full refund
+    await promotions.restoreFreeBooking(expired, 'request'); // never delivered → give the freebie back
     emit.toRequest(String(requestId), EVENTS.REQUEST_STATUS, { requestId: String(requestId), status: REQUEST_STATUS.EXPIRED });
     return;
   }
@@ -716,6 +737,7 @@ async function handleCustomerCancel(customerId, requestId) {
     // no-ops unless a UPI-at-door payment had already landed). Cancelling after a
     // driver committed is the abuse signal → strike the customer.
     await maybeRefund(cancelled);
+    await promotions.restoreFreeBooking(cancelled, 'request'); // never delivered → give the freebie back
     await addCancelStrike(customerId);
     emit.toRequest(String(requestId), EVENTS.REQUEST_STATUS, { requestId: String(requestId), status: REQUEST_STATUS.CANCELLED });
     return;
@@ -740,6 +762,7 @@ async function giveUp(state) {
   ).catch(() => null);
   if (updated) {
     await maybeRefund(updated); // prepaid UPI but nobody took it → refund
+    await promotions.restoreFreeBooking(updated, 'request'); // never delivered → give the freebie back
     emit.toUser(String(updated.customerId), EVENTS.REQUEST_STATUS, {
       requestId: state.requestId,
       status: REQUEST_STATUS.NO_FULFILLER,
@@ -868,6 +891,7 @@ async function sweep() {
       ).catch(() => null);
       if (updated) {
         await maybeRefund(updated);
+        await promotions.restoreFreeBooking(updated, 'request'); // never delivered → give the freebie back
         emit.toUser(String(updated.customerId), EVENTS.REQUEST_STATUS, {
           requestId: String(updated._id),
           status: REQUEST_STATUS.NO_FULFILLER,

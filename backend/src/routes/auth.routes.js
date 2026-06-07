@@ -7,6 +7,7 @@ const {
   logout,
   getMe,
   updateMe,
+  deleteMe,
   forgotPassword,
   resetPassword,
   partnerSignup,
@@ -79,5 +80,8 @@ router.patch(
   validate,
   updateMe
 );
+
+// Self-service account deletion (DPDP §12 erasure + Play Store requirement).
+router.delete('/me', protect, deleteMe);
 
 module.exports = router;

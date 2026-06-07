@@ -1,4 +1,5 @@
 const DeliveryRequest = require('../models/DeliveryRequest.model');
+const Order = require('../models/Order.model');
 const User = require('../models/User.model');
 const registry = require('../realtime/registry');
 const emit = require('../realtime/emit');
@@ -41,9 +42,16 @@ const getJobHistory = async (req, res) => {
       .sort({ createdAt: -1 })
       .limit(50);
 
+    // Delivered SCHEDULED orders also pay the partner (Order stores partnerPayout at
+    // top level, vs DeliveryRequest under pricing.*). Cancelled orders pay nothing.
+    const orders = await Order.find({ driverAssigned: req.user._id, status: 'delivered' })
+      .populate('items.productId', 'name unit')
+      .sort({ createdAt: -1 })
+      .limit(50);
+
     // Completed jobs pay the partner payout (net of KitUm's 5% commission);
     // a verified customer-no-show pays the dry-run fee for the wasted trip.
-    const earnings = jobs.reduce((sum, j) => {
+    const requestEarnings = jobs.reduce((sum, j) => {
       if (j.status === REQUEST_STATUS.COMPLETED) {
         return sum + (j.pricing?.partnerPayout ?? j.pricing?.fare ?? j.pricing?.amount ?? 0);
       }
@@ -52,8 +60,13 @@ const getJobHistory = async (req, res) => {
       }
       return sum;
     }, 0);
+    const orderEarnings = orders.reduce(
+      (sum, o) => sum + (o.partnerPayout ?? Math.max(0, (o.fare ?? 0) - (o.partnerCommission ?? 0))),
+      0
+    );
+    const earnings = requestEarnings + orderEarnings;
 
-    res.json({ success: true, data: { jobs, earnings } });
+    res.json({ success: true, data: { jobs, orders, earnings } });
   } catch (err) {
     res.status(500).json({ success: false, error: 'Failed to fetch history' });
   }
