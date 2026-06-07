@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, spacing, radius, type } from '../lib/theme';
-import { Header, Card, Pill, IconChip } from '../components/ui';
+import { Header, Card, Pill, IconChip, Skeleton } from '../components/ui';
 import Icon from '../components/Icon';
 import { getHistory } from '../lib/api';
 import { REQUEST_STATUS } from '../lib/constants';
@@ -28,6 +28,47 @@ function TripRow({ job }) {
   );
 }
 
+/** A skeleton row shaped like <TripRow> (icon chip · title/date · amount/pill). */
+function SkeletonTripRow() {
+  return (
+    <View style={styles.row}>
+      <Skeleton width={40} height={40} radius={radius.md} />
+      <View style={{ flex: 1, marginLeft: spacing.lg }}>
+        <Skeleton width="55%" height={15} />
+        <Skeleton width="35%" height={12} style={{ marginTop: 6 }} />
+      </View>
+      <View style={{ alignItems: 'flex-end', gap: 8 }}>
+        <Skeleton width={48} height={15} />
+        <Skeleton width={72} height={22} radius={radius.pill} />
+      </View>
+    </View>
+  );
+}
+
+/** Loading placeholder mirroring the loaded screen: total card + a list of trips. */
+function HistorySkeleton() {
+  return (
+    <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+      <Card style={styles.totalCard}>
+        <View>
+          <Skeleton width={96} height={11} />
+          <Skeleton width={140} height={30} style={{ marginTop: spacing.sm }} />
+        </View>
+        <Skeleton width={46} height={46} radius={radius.md} />
+      </Card>
+
+      <Card padded={false} style={styles.list}>
+        {Array.from({ length: 5 }).map((_, i) => (
+          <View key={i}>
+            {i > 0 && <View style={styles.divider} />}
+            <SkeletonTripRow />
+          </View>
+        ))}
+      </Card>
+    </ScrollView>
+  );
+}
+
 export default function HistoryScreen({ onBack }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -45,9 +86,7 @@ export default function HistoryScreen({ onBack }) {
     <SafeAreaView edges={['top']} style={styles.root}>
       <Header title="Trip history" onBack={onBack} />
       {loading ? (
-        <View style={styles.center}>
-          <ActivityIndicator color={colors.primary} />
-        </View>
+        <HistorySkeleton />
       ) : (
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           <Card style={styles.totalCard}>
@@ -84,7 +123,6 @@ export default function HistoryScreen({ onBack }) {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   scroll: { padding: spacing.xl, paddingTop: spacing.sm },
 
   totalCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.xl },

@@ -11,7 +11,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { colors, spacing, radius, type } from '../lib/theme';
-import { Header, Card, Input, Button, SectionLabel } from '../components/ui';
+import { Header, Card, Input, Button, SectionLabel, Skeleton, SkeletonText } from '../components/ui';
 import Icon from '../components/Icon';
 import { getKyc, uploadKyc } from '../lib/api';
 import { useAuth } from '../lib/store';
@@ -51,6 +51,55 @@ function DocSlot({ label, hint, image, uploaded, onPick }) {
   );
 }
 
+/* Skeleton that mirrors the verification layout (status banner + doc cards)
+ * while the server KYC status loads, so the screen never flashes empty. */
+function SkeletonSlot() {
+  return (
+    <View style={styles.slot}>
+      <Skeleton width={56} height={56} radius={radius.sm} />
+      <View style={{ flex: 1, marginLeft: spacing.lg }}>
+        <Skeleton width="55%" height={14} />
+        <Skeleton width="35%" height={11} style={{ marginTop: spacing.sm }} />
+      </View>
+    </View>
+  );
+}
+
+function KycSkeleton() {
+  return (
+    <>
+      {/* Status banner */}
+      <Card style={styles.banner}>
+        <Skeleton width={24} height={24} radius={radius.sm} />
+        <View style={{ flex: 1, marginLeft: spacing.lg }}>
+          <Skeleton width="50%" height={16} />
+          <SkeletonText lines={2} lineHeight={11} gap={spacing.sm} style={{ marginTop: spacing.sm }} />
+        </View>
+      </Card>
+
+      {/* PAN card */}
+      <Skeleton width={90} height={12} style={styles.label} />
+      <Card style={{ gap: spacing.lg }}>
+        <SkeletonSlot />
+        <Skeleton height={52} radius={radius.md} />
+      </Card>
+
+      {/* Driver’s licence */}
+      <Skeleton width={120} height={12} style={styles.label} />
+      <Card style={{ gap: spacing.lg }}>
+        <SkeletonSlot />
+        <SkeletonSlot />
+        <Skeleton height={52} radius={radius.md} />
+      </Card>
+
+      <View style={styles.progress}>
+        <Skeleton width={14} height={14} radius={radius.sm} />
+        <Skeleton width={160} height={12} />
+      </View>
+    </>
+  );
+}
+
 export default function KycScreen({ user, onBack }) {
   const k0 = user?.fulfillerProfile?.kyc || {};
   const [status, setStatus] = useState(k0.status || 'not_submitted');
@@ -63,6 +112,7 @@ export default function KycScreen({ user, onBack }) {
   const [panNumber, setPanNumber] = useState(k0.panNumber || '');
   const [dlNumber, setDlNumber] = useState(k0.dlNumber || '');
   const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   // Refresh from server so freshly-verified/rejected state is accurate.
   useEffect(() => {
@@ -76,7 +126,8 @@ export default function KycScreen({ user, onBack }) {
         if (d.panNumber) setPanNumber(d.panNumber);
         if (d.dlNumber) setDlNumber(d.dlNumber);
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   const pickFrom = async (mode, setter, label) => {
@@ -162,6 +213,10 @@ export default function KycScreen({ user, onBack }) {
         showsVerticalScrollIndicator={false}
         bottomOffset={24}
       >
+        {loading ? (
+          <KycSkeleton />
+        ) : (
+        <>
           {/* Status banner */}
           <Card style={[styles.banner, { backgroundColor: t.bg, borderColor: 'transparent' }]}>
             <Icon name={s.icon} size={24} color={t.fg} />
@@ -199,6 +254,8 @@ export default function KycScreen({ user, onBack }) {
             style={{ marginTop: spacing.sm }}
           />
           <Text style={styles.privacy}>Your documents are stored securely and used only to verify your account.</Text>
+        </>
+        )}
       </KeyboardAwareScrollView>
     </SafeAreaView>
   );

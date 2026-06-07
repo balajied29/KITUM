@@ -13,7 +13,8 @@
     "seed:admin": "node src/seeds/admin.js",
     "seed:fulfillers": "node src/seeds/fulfillers.js",
     "seed:localities": "node src/seeds/geocode-localities.js",
-    "migrate:scheduled": "node src/migrations/2026-06-scheduled-assignment.js"
+    "migrate:scheduled": "node src/migrations/2026-06-scheduled-assignment.js",
+    "migrate:encrypt": "node src/migrations/2026-06-encrypt-kyc-bank.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1061.0",

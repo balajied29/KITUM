@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import AppHeader from '@/components/AppHeader';
 import Footer from '@/components/Footer';
-import { useLocationStore } from '@/lib/store';
+import { useLocationStore, useAuthStore } from '@/lib/store';
 import { getProducts } from '@/lib/api';
 import { TankerIcon, BoltIcon } from '@/components/icons';
 import { tankerImage } from '@/lib/tankerImage';
@@ -51,6 +51,8 @@ const TRUST = [
 
 export default function HomePage() {
   const { hasSelected, openModal } = useLocationStore();
+  const user = useAuthStore((s) => s.user);
+  const freeLeft = user?.customerPerks?.freeBookingsRemaining || 0;
   const [tankers, setTankers] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -73,6 +75,18 @@ export default function HomePage() {
   return (
     <main className="bg-bg-page min-h-dvh">
       <AppHeader showLocality={true} />
+
+      {/* Launch offer — free bookings remaining (server-authoritative perk) */}
+      {freeLeft > 0 && (
+        <section className="px-4 pt-3">
+          <div className="rounded-card border border-emerald-200 bg-emerald-50 px-3.5 py-2.5 flex items-center gap-2.5">
+            <span className="text-lg leading-none">🎉</span>
+            <p className="text-xs font-medium text-emerald-800">
+              You have <span className="font-700">{freeLeft} free {freeLeft === 1 ? 'delivery' : 'deliveries'}</span> — no platform fee.
+            </p>
+          </div>
+        </section>
+      )}
 
       {/* Hero — the primary funnel: order a tanker now */}
       <section className="px-4 pt-1">

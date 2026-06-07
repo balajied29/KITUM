@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { ScrollView, View, Text, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, spacing, radius, type, shadow } from '../lib/theme';
-import { Gradient, Card } from '../components/ui';
+import { Gradient, Card, Skeleton } from '../components/ui';
 import Icon from '../components/Icon';
 import { getHistory } from '../lib/api';
 import { REQUEST_STATUS } from '../lib/constants';
@@ -11,6 +11,7 @@ import { useDriverSession } from '../providers/DriverSessionProvider';
 export default function EarningsScreen() {
   const { earnings } = useDriverSession();
   const [trips, setTrips] = useState(null);
+  const loading = trips == null;
 
   useEffect(() => {
     getHistory()
@@ -25,11 +26,20 @@ export default function EarningsScreen() {
 
         <Gradient style={styles.hero}>
           <Text style={styles.heroLabel}>Total earned</Text>
-          <Text style={styles.heroValue}>₹{Number(earnings).toLocaleString('en-IN')}</Text>
-          <View style={styles.heroMetaRow}>
-            <Icon name="check-circle" size={14} color="rgba(255,255,255,0.85)" />
-            <Text style={styles.heroMeta}>{trips == null ? '—' : trips} deliveries completed</Text>
-          </View>
+          {loading ? (
+            <>
+              <Skeleton width={180} height={40} radius={radius.sm} style={[styles.heroSkeleton, { marginTop: spacing.xs }]} />
+              <Skeleton width={150} height={14} radius={radius.sm} style={[styles.heroSkeleton, { marginTop: spacing.md }]} />
+            </>
+          ) : (
+            <>
+              <Text style={styles.heroValue}>₹{Number(earnings).toLocaleString('en-IN')}</Text>
+              <View style={styles.heroMetaRow}>
+                <Icon name="check-circle" size={14} color="rgba(255,255,255,0.85)" />
+                <Text style={styles.heroMeta}>{trips} deliveries completed</Text>
+              </View>
+            </>
+          )}
         </Gradient>
 
         <Card style={styles.note}>
@@ -52,6 +62,7 @@ const styles = StyleSheet.create({
   heroValue: { color: '#fff', fontSize: 40, fontWeight: '800', letterSpacing: -1, marginTop: spacing.xs },
   heroMetaRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.md },
   heroMeta: { color: 'rgba(255,255,255,0.9)', fontSize: 13, fontWeight: '600' },
+  heroSkeleton: { backgroundColor: 'rgba(255,255,255,0.28)' },
   note: { marginTop: spacing.lg },
   noteRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   noteText: { ...type.caption, flex: 1 },

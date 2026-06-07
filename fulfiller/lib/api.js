@@ -47,6 +47,8 @@ export const partnerSignup = ({ photo, ...fields }) => {
   return api.post('/auth/partner-signup', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
 };
 export const logout = (refreshToken) => api.post('/auth/logout', { refreshToken });
+// Self-service account deletion (DPDP §12 right to erasure + Play Store requirement).
+export const deleteAccount = () => api.delete('/auth/me');
 export const getMe = () => api.get('/auth/me'); // refresh user (e.g. approval status)
 export const getActiveJob = () => api.get('/fulfiller/active');
 export const getHistory = () => api.get('/fulfiller/history');

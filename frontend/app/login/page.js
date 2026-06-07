@@ -19,6 +19,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState('');
+  const [consent, setConsent] = useState(false); // explicit DPDP consent + 18+ (signup only)
 
   // Already signed in? Skip the form.
   useEffect(() => {
@@ -28,6 +29,10 @@ export default function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    if (mode === 'signup' && !consent) {
+      setError('Please confirm you are 18+ and agree to the Terms & Privacy Policy.');
+      return;
+    }
     setLoading(true);
     try {
       const res = mode === 'signup'
@@ -105,23 +110,44 @@ export default function LoginPage() {
             </Link>
           )}
 
+          {mode === 'signup' && (
+            <label className="flex items-start gap-2 text-[11px] leading-relaxed text-text-muted">
+              <input
+                type="checkbox"
+                checked={consent}
+                onChange={(e) => setConsent(e.target.checked)}
+                className="mt-0.5 h-4 w-4 shrink-0 accent-primary"
+              />
+              <span>
+                I confirm I am <b>18 or older</b>, agree to the{' '}
+                <Link href="/legal/terms" className="text-primary font-medium hover:underline">Terms</Link>{' '}
+                and{' '}
+                <Link href="/legal/privacy" className="text-primary font-medium hover:underline">Privacy Policy</Link>, and
+                consent to KitUm processing my personal data (name, contact, address &amp; location) to provide
+                the delivery service. You can withdraw consent or delete your account anytime.
+              </span>
+            </label>
+          )}
+
           {error && <p className="text-red-600 text-xs">{error}</p>}
 
-          <button type="submit" disabled={loading} className="btn-primary w-full">
+          <button
+            type="submit"
+            disabled={loading || (mode === 'signup' && !consent)}
+            className="btn-primary w-full disabled:opacity-50"
+          >
             {loading ? (mode === 'signup' ? 'Creating account…' : 'Signing in…') : (mode === 'signup' ? 'Sign Up' : 'Sign In')}
           </button>
 
-          <LegalConsent
-            action={mode === 'signup' ? 'creating an account' : 'signing in'}
-            variant="auth"
-            className="text-center"
-          />
+          {mode === 'signin' && (
+            <LegalConsent action="signing in" variant="auth" className="text-center" />
+          )}
         </form>
 
         <p className="text-center text-sm text-text-muted mt-5">
           {mode === 'signin' ? "Don't have an account? " : 'Already have an account? '}
           <button
-            onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(''); }}
+            onClick={() => { setMode(mode === 'signin' ? 'signup' : 'signin'); setError(''); setConsent(false); }}
             className="text-primary font-medium hover:underline"
           >
             {mode === 'signin' ? 'Sign Up' : 'Sign In'}

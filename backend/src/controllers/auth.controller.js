@@ -11,6 +11,7 @@ const Order = require('../models/Order.model');
 const DeliveryRequest = require('../models/DeliveryRequest.model');
 const SupportTicket = require('../models/SupportTicket.model');
 const { REQUEST_STATUS } = require('../shared/constants');
+const { scrubSensitive } = require('../services/fieldCrypto');
 
 // multipart image mimetype → file extension (for the signup selfie).
 const MIME_EXT = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/heic': 'heic', 'image/heif': 'heif' };
@@ -22,7 +23,7 @@ const clientBase = () => (process.env.CLIENT_URL || 'http://localhost:3000').spl
 const sanitize = (u) => {
   const o = u?.toObject ? u.toObject() : { ...(u || {}) };
   delete o.password;
-  return o;
+  return scrubSensitive(o);
 };
 
 const register = async (req, res) => {
@@ -101,7 +102,7 @@ const refresh = async (req, res) => {
     }
     res.json({
       success: true,
-      data: { accessToken: rotated.accessToken, refreshToken: rotated.refreshToken, user },
+      data: { accessToken: rotated.accessToken, refreshToken: rotated.refreshToken, user: scrubSensitive(user.toObject()) },
     });
   } catch (err) {
     res.status(500).json({ success: false, error: 'Could not refresh session.' });
@@ -117,7 +118,7 @@ const logout = async (req, res) => {
 const getMe = async (req, res) => {
   const u = req.user.toObject ? req.user.toObject() : req.user;
   delete u.password;
-  res.json({ success: true, data: u });
+  res.json({ success: true, data: scrubSensitive(u) });
 };
 
 /** Update the signed-in user's editable profile fields (name, phone). */

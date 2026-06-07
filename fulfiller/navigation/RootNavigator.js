@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { View, Image, ActivityIndicator, StyleSheet } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
@@ -11,6 +12,8 @@ import { contactSupport } from '../lib/support';
 import { useDriverSession } from '../providers/DriverSessionProvider';
 
 import LoginScreen from '../screens/LoginScreen';
+import LandingScreen from '../screens/LandingScreen';
+import OnboardingScreen from '../screens/OnboardingScreen';
 import { HomeMain } from '../screens/HomeScreen';
 import HistoryScreen from '../screens/HistoryScreen';
 import EarningsScreen from '../screens/EarningsScreen';
@@ -110,11 +113,21 @@ function Tabs() {
   );
 }
 
+/* ---------------- Unauthenticated flow: landing → login (apply / sign in) ---------------- */
+function AuthFlow() {
+  const [authMode, setAuthMode] = useState(null); // null = landing, else 'signin' | 'signup'
+  // Signup is the multi-step onboarding (selfie → details → tanker → success);
+  // returning partners sign in via LoginScreen.
+  if (authMode === 'signup') return <OnboardingScreen onBack={() => setAuthMode(null)} />;
+  if (authMode === 'signin') return <LoginScreen initialMode="signin" onBack={() => setAuthMode(null)} />;
+  return <LandingScreen onStart={() => setAuthMode('signup')} onSignIn={() => setAuthMode('signin')} />;
+}
+
 /* ---------------- Root (auth gate → tabs + live-delivery takeovers) ---------------- */
 export default function Root() {
   const s = useDriverSession();
 
-  if (!s.accessToken) return <LoginScreen />;
+  if (!s.accessToken) return <AuthFlow />;
 
   if (s.booting) {
     return (

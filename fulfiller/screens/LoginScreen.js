@@ -16,13 +16,14 @@ import { colors, spacing, radius, type } from '../lib/theme';
 import { Button, Input } from '../components/ui';
 import Icon from '../components/Icon';
 
-export default function LoginScreen() {
+export default function LoginScreen({ initialMode = 'signin', onBack } = {}) {
   const setAuth = useAuth((s) => s.setAuth);
   const insets = useSafeAreaInsets();
-  const [mode, setMode] = useState('signin'); // signin | signup | submitted
+  const [mode, setMode] = useState(initialMode); // signin | signup | submitted
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
   const [photo, setPhoto] = useState(null); // { uri, name, type } — camera selfie
+  const [agree, setAgree] = useState(false); // 18+ & DPDP consent (signup only)
 
   // Camera ONLY (no gallery) so the profile photo is a genuine live selfie.
   const takePhoto = async () => {
@@ -57,6 +58,7 @@ export default function LoginScreen() {
 
   const switchMode = (m) => {
     setErr('');
+    setAgree(false);
     setMode(m);
   };
 
@@ -88,6 +90,10 @@ export default function LoginScreen() {
       setErr('Please add a profile photo using your camera.');
       return;
     }
+    if (!agree) {
+      setErr('Please confirm you are 18+ and agree to the Terms & Privacy Policy.');
+      return;
+    }
     setBusy(true);
     try {
       const res = await partnerSignup({
@@ -111,6 +117,15 @@ export default function LoginScreen() {
   return (
     <View style={styles.root}>
       <StatusBar style="light" />
+      {onBack && (
+        <TouchableOpacity
+          onPress={onBack}
+          style={[styles.backBtn, { top: insets.top + spacing.sm }]}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <Icon name="arrow-left" size={22} color="#fff" />
+        </TouchableOpacity>
+      )}
       <KeyboardAwareScrollView
         style={{ flex: 1 }}
         contentContainerStyle={[styles.scroll, { paddingTop: insets.top + spacing.xxl, paddingBottom: insets.bottom + spacing.xxl }]}
@@ -191,6 +206,19 @@ export default function LoginScreen() {
                   </>
                 )}
 
+                {mode === 'signup' && (
+                  <TouchableOpacity activeOpacity={0.75} onPress={() => setAgree((v) => !v)} style={styles.consentRow}>
+                    <View style={[styles.checkbox, agree && styles.checkboxOn]}>
+                      {agree && <Icon name="check" size={13} color="#fff" />}
+                    </View>
+                    <Text style={styles.consentText}>
+                      I confirm I am 18 or older, agree to the Terms & Privacy Policy, and consent to KitUm
+                      processing my personal data — including my photo, PAN and driver’s licence — to verify
+                      and operate my partner account. I can withdraw consent or delete my account anytime.
+                    </Text>
+                  </TouchableOpacity>
+                )}
+
                 {!!err && (
                   <View style={styles.errBanner}>
                     <Icon name="alert-circle" size={15} color={colors.danger} />
@@ -202,6 +230,7 @@ export default function LoginScreen() {
                   label={mode === 'signin' ? 'Sign in' : 'Submit application'}
                   onPress={mode === 'signin' ? signIn : apply}
                   loading={busy}
+                  disabled={mode === 'signup' && !agree}
                   iconRight={mode === 'signin' ? 'arrow-right' : undefined}
                   style={{ marginTop: spacing.sm }}
                 />
@@ -224,6 +253,7 @@ export default function LoginScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.primary },
+  backBtn: { position: 'absolute', left: spacing.lg, zIndex: 10, width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
   scroll: { flexGrow: 1, justifyContent: 'center', padding: spacing.xxl },
   brand: { alignItems: 'center', marginBottom: spacing.xxl },
   logo: {
@@ -292,6 +322,11 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginBottom: spacing.lg,
   },
+
+  consentRow: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md, marginTop: spacing.xs },
+  checkbox: { width: 22, height: 22, borderRadius: 6, borderWidth: 1.5, borderColor: colors.borderStrong, alignItems: 'center', justifyContent: 'center', marginTop: 1 },
+  checkboxOn: { backgroundColor: colors.primary, borderColor: colors.primary },
+  consentText: { flex: 1, fontSize: 12, lineHeight: 17, color: colors.textSecondary },
 
   switchRow: { flexDirection: 'row', justifyContent: 'center', gap: spacing.xs, marginTop: spacing.xl },
   switchText: { ...type.caption },

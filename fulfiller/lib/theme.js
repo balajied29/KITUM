@@ -1,5 +1,5 @@
 /**
- * KitUm Partner — design tokens.
+ * KitUm Partner, design tokens.
  * One source of truth for color, spacing, radius, type and elevation so the
  * whole app stays visually consistent. Spacing is on a 4pt grid.
  */
@@ -61,6 +61,17 @@ export const radius = {
   pill: 999,
 };
 
+// Inter family names (loaded in App.js). The app-wide patch in lib/fonts.js maps
+// fontWeight → the right variant automatically, so most code just sets fontWeight;
+// use these when you need to name a family explicitly.
+export const fonts = {
+  regular: 'Inter_400Regular',
+  medium: 'Inter_500Medium',
+  semibold: 'Inter_600SemiBold',
+  bold: 'Inter_700Bold',
+  extrabold: 'Inter_800ExtraBold',
+};
+
 export const type = {
   display: { fontSize: 28, fontWeight: '800', letterSpacing: -0.5, color: colors.text },
   h1: { fontSize: 22, fontWeight: '800', letterSpacing: -0.3, color: colors.text },
@@ -89,4 +100,4 @@ export const shadow = {
   },
 };
 
-export default { colors, spacing, radius, type, shadow };
+export default { colors, spacing, radius, type, shadow, fonts };

@@ -9,7 +9,7 @@ const { initSocket } = require('./realtime/io');
 const dispatch = require('./services/dispatch/DispatchManager');
 
 // ---- Fail fast: refuse to boot without the essentials ----
-const REQUIRED_ENV = ['MONGO_URI', 'JWT_SECRET'];
+const REQUIRED_ENV = ['MONGO_URI', 'JWT_SECRET', 'FIELD_ENCRYPTION_KEY'];
 const missing = REQUIRED_ENV.filter((k) => !process.env[k]);
 if (missing.length) {
   console.error(`✖ Missing required env vars: ${missing.join(', ')}. Set them and restart.`);

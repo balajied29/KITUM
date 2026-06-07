@@ -41,7 +41,12 @@ export default function CheckoutPage() {
 
   const cartTotal = totalAmount();
   const slotId    = slot?._id ?? null;
-  const bill      = priceQuote(cartTotal);
+  // Launch offer (display-only preview): waive the 5% platform fee while the
+  // customer still has free bookings. Server is authoritative at order creation.
+  const freeLeft  = user?.customerPerks?.freeBookingsRemaining || 0;
+  const willWaiveFee = freeLeft > 0;
+  const bill      = priceQuote(cartTotal, { waivePlatformFee: willWaiveFee });
+  const regularFee = priceQuote(cartTotal).platformFee; // the un-waived 5% (struck through)
 
   const useCurrentLocation = () => {
     if (!navigator.geolocation) return;
@@ -256,8 +261,18 @@ export default function CheckoutPage() {
           </div>
           <div className="flex justify-between py-1">
             <span className="text-text-muted">Platform fee (5%)</span>
-            <span className="text-text-main">₹{bill.platformFee}</span>
+            {bill.waivePlatformFee ? (
+              <span className="flex items-center gap-1.5">
+                <span className="text-text-muted line-through">₹{regularFee}</span>
+                <span className="font-700 text-emerald-600">FREE</span>
+              </span>
+            ) : (
+              <span className="text-text-main">₹{bill.platformFee}</span>
+            )}
           </div>
+          {bill.waivePlatformFee && (
+            <p className="text-[11px] font-medium text-emerald-600">🎉 Launch offer — platform fee waived</p>
+          )}
           <div className="flex justify-between py-1.5 border-t border-border-default mt-1 font-700 text-text-main">
             <span>Total</span>
             <span>₹{bill.total}</span>

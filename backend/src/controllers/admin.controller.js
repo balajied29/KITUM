@@ -10,6 +10,7 @@ const bestFit = require('../services/scheduled/bestFit');
 const storage = require('../services/storage');
 const promotions = require('../services/promotions');
 const { partnerSplit } = require('../shared/pricing');
+const { decrypt, scrubSensitive } = require('../services/fieldCrypto');
 
 // Orders
 const getAllOrders = async (req, res) => {
@@ -289,7 +290,7 @@ const createFulfiller = async (req, res) => {
 const listFulfillers = async (req, res) => {
   try {
     const fulfillers = await User.find({ role: 'fulfiller' }).select('-password').sort({ createdAt: -1 });
-    res.json({ success: true, data: fulfillers });
+    res.json({ success: true, data: fulfillers.map((f) => scrubSensitive(f.toObject())) });
   } catch (err) {
     res.status(500).json({ success: false, error: 'Failed to fetch fulfillers' });
   }
@@ -383,15 +384,17 @@ const getFulfillerKyc = async (req, res) => {
       success: true,
       data: {
         status: k.status || 'not_submitted',
-        panNumber: k.panNumber || '',
-        dlNumber: k.dlNumber || '',
+        panNumber: decrypt(k.panNumber) || '',
+        dlNumber: decrypt(k.dlNumber) || '',
         submittedAt: k.submittedAt || null,
         reviewedAt: k.reviewedAt || null,
         rejectionReason: k.rejectionReason || '',
         panUrl,
         dlFrontUrl,
         dlBackUrl,
-        bank: user.fulfillerProfile?.bank || null,
+        bank: user.fulfillerProfile?.bank
+          ? { ...user.fulfillerProfile.bank.toObject(), accountNumber: decrypt(user.fulfillerProfile.bank.accountNumber) || '' }
+          : null,
         storageConfigured: storage.isConfigured(),
       },
     });

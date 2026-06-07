@@ -44,6 +44,7 @@ export const register        = (name, email, password) => api.post('/auth/regist
 export const login           = (email, password)        => api.post('/auth/login',    { email, password });
 export const getMe           = ()                       => api.get('/auth/me');
 export const updateProfile   = (data)                   => api.patch('/auth/me', data);
+export const deleteAccount   = ()                       => api.delete('/auth/me');
 export const logout          = (refreshToken)           => api.post('/auth/logout', { refreshToken });
 export const forgotPassword  = (email)                  => api.post('/auth/forgot-password', { email });
 export const resetPassword   = (token, password)        => api.post('/auth/reset-password', { token, password });
@@ -112,6 +113,13 @@ export const adminDeleteFulfiller  = (id)       => api.delete(`/admin/fulfillers
 export const adminGetFulfillerKyc  = (id)       => api.get(`/admin/fulfillers/${id}/kyc`);
 export const adminVerifyFulfillerKyc = (id)     => api.post(`/admin/fulfillers/${id}/kyc/verify`);
 export const adminRejectFulfillerKyc = (id, reason) => api.post(`/admin/fulfillers/${id}/kyc/reject`, { reason });
+
+// Admin — launch-offer campaigns (see docs/launch-offers-design.md)
+export const adminGetCampaigns      = ()              => api.get('/admin/campaigns');
+export const adminUpdateCampaign    = (key, data)    => api.patch(`/admin/campaigns/${key}`, data);
+export const adminGetCampaignGrants = (key)          => api.get(`/admin/campaigns/${key}/grants`);
+export const adminGrantCampaign     = (key, payload) => api.post(`/admin/campaigns/${key}/grant`, payload);
+export const adminRevokeCampaign    = (key, userId)  => api.post(`/admin/campaigns/${key}/revoke`, { userId });
 
 // Reviews
 export const createReview         = (payload)     => api.post('/reviews', payload);

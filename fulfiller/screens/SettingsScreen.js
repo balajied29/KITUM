@@ -1,12 +1,36 @@
-import { ScrollView, StyleSheet, Linking } from 'react-native';
+import { ScrollView, StyleSheet, Linking, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Constants from 'expo-constants';
 import { colors, spacing } from '../lib/theme';
 import { Header, Card, MenuRow, SectionLabel } from '../components/ui';
 import { contactSupport } from '../lib/support';
+import { deleteAccount } from '../lib/api';
 
 export default function SettingsScreen({ user, onBack, onLogout, onSupport }) {
   const version = Constants.expoConfig?.version || '1.0.0';
+
+  // Account deletion — DPDP §12 right to erasure (+ Play Store requirement).
+  const confirmDelete = () => {
+    Alert.alert(
+      'Delete your account?',
+      'This permanently erases your personal data — your photo, PAN, licence, bank details and location. Finish or release any active delivery first. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await deleteAccount();
+              onLogout?.();
+            } catch (e) {
+              Alert.alert('Could not delete account', e?.response?.data?.error || 'Please try again.');
+            }
+          },
+        },
+      ]
+    );
+  };
 
   return (
     <SafeAreaView edges={['top']} style={styles.root}>
@@ -28,6 +52,10 @@ export default function SettingsScreen({ user, onBack, onLogout, onSupport }) {
 
         <Card padded={false} style={styles.card}>
           <MenuRow icon="log-out" label="Sign out" danger onPress={onLogout} last />
+        </Card>
+
+        <Card padded={false} style={styles.card}>
+          <MenuRow icon="trash-2" label="Delete account" danger onPress={confirmDelete} last />
         </Card>
       </ScrollView>
     </SafeAreaView>

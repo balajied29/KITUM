@@ -1,8 +1,9 @@
 'use client';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore } from '@/lib/store';
-import { logout as apiLogout } from '@/lib/api';
+import { logout as apiLogout, deleteAccount } from '@/lib/api';
 import AppHeader from '@/components/AppHeader';
 import Footer from '@/components/Footer';
 
@@ -22,6 +23,23 @@ export default function AccountPage() {
     apiLogout(useAuthStore.getState().refreshToken).catch(() => {});
     logout();
     router.replace('/');
+  };
+
+  // Account deletion — DPDP §12 right to erasure (+ Play Store requirement).
+  const [confirming, setConfirming] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [delErr, setDelErr] = useState('');
+  const handleDelete = async () => {
+    setDeleting(true);
+    setDelErr('');
+    try {
+      await deleteAccount();
+      logout();
+      router.replace('/');
+    } catch (e) {
+      setDelErr(e?.response?.data?.error || 'Could not delete your account. Please try again.');
+      setDeleting(false);
+    }
   };
 
   if (!user) {
@@ -72,6 +90,38 @@ export default function AccountPage() {
         <button onClick={handleLogout} className="btn-ghost w-full text-sm border border-border-default text-red-500 hover:bg-red-50">
           Sign Out
         </button>
+      </div>
+
+      {/* Delete account — DPDP §12 right to erasure */}
+      <div className="px-4 mt-6">
+        {!confirming ? (
+          <button
+            onClick={() => { setConfirming(true); setDelErr(''); }}
+            className="w-full text-xs text-text-muted hover:text-red-600 underline underline-offset-2"
+          >
+            Delete my account
+          </button>
+        ) : (
+          <div className="card border border-red-200 bg-red-50/50">
+            <p className="text-sm font-700 text-text-main">Delete your account?</p>
+            <p className="text-xs text-text-muted mt-1 leading-relaxed">
+              This permanently erases your personal data — name, contact details, saved addresses and
+              location. Past order records are retained only in anonymised form where the law requires
+              (tax &amp; dispute resolution). This can’t be undone.
+            </p>
+            {delErr && <p className="text-red-600 text-xs mt-2">{delErr}</p>}
+            <div className="flex gap-2 mt-3">
+              <button onClick={() => setConfirming(false)} disabled={deleting}
+                className="btn-ghost flex-1 text-sm border border-border-default disabled:opacity-50">
+                Cancel
+              </button>
+              <button onClick={handleDelete} disabled={deleting}
+                className="btn-primary flex-1 text-sm !bg-red-600 hover:!bg-red-700 disabled:opacity-50">
+                {deleting ? 'Deleting…' : 'Delete everything'}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       <Footer />

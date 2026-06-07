@@ -6,6 +6,7 @@ const emit = require('../realtime/emit');
 const storage = require('../services/storage');
 const dispatch = require('../services/dispatch/DispatchManager');
 const { REQUEST_STATUS, EVENTS } = require('../shared/constants');
+const { encrypt, decrypt, scrubSensitive } = require('../services/fieldCrypto');
 
 const PERSIST_THROTTLE_MS = 20000;
 
@@ -198,8 +199,8 @@ const KYC_DOCS = [
 function kycView(k = {}) {
   return {
     status: k.status || 'not_submitted',
-    panNumber: k.panNumber || '',
-    dlNumber: k.dlNumber || '',
+    panNumber: decrypt(k.panNumber) || '',
+    dlNumber: decrypt(k.dlNumber) || '',
     hasPan: !!k.panKey,
     hasDlFront: !!k.dlFrontKey,
     hasDlBack: !!k.dlBackKey,
@@ -245,9 +246,9 @@ const uploadKyc = async (req, res) => {
     );
 
     if (req.body.panNumber !== undefined)
-      set['fulfillerProfile.kyc.panNumber'] = String(req.body.panNumber).trim().toUpperCase();
+      set['fulfillerProfile.kyc.panNumber'] = encrypt(String(req.body.panNumber).trim().toUpperCase());
     if (req.body.dlNumber !== undefined)
-      set['fulfillerProfile.kyc.dlNumber'] = String(req.body.dlNumber).trim().toUpperCase();
+      set['fulfillerProfile.kyc.dlNumber'] = encrypt(String(req.body.dlNumber).trim().toUpperCase());
 
     const merged = {
       panKey: set['fulfillerProfile.kyc.panKey'] || existing.panKey,
@@ -267,7 +268,8 @@ const uploadKyc = async (req, res) => {
     }
 
     const user = await User.findByIdAndUpdate(req.user._id, { $set: set }, { new: true }).select('-password');
-    res.json({ success: true, data: { kyc: kycView(user.fulfillerProfile?.kyc), user } });
+    const kyc = kycView(user.fulfillerProfile?.kyc);
+    res.json({ success: true, data: { kyc, user: scrubSensitive(user.toObject()) } });
   } catch (err) {
     res.status(500).json({ success: false, error: 'Could not upload your documents. Please try again.' });
   }
@@ -278,7 +280,7 @@ const uploadKyc = async (req, res) => {
 function bankView(b = {}) {
   return {
     accountHolder: b.accountHolder || '',
-    accountNumber: b.accountNumber || '',
+    accountNumber: decrypt(b.accountNumber) || '',
     ifsc: b.ifsc || '',
     bankName: b.bankName || '',
     upiId: b.upiId || '',
@@ -318,14 +320,15 @@ const saveBank = async (req, res) => {
 
     const set = {
       'fulfillerProfile.bank.accountHolder': holder,
-      'fulfillerProfile.bank.accountNumber': acct,
+      'fulfillerProfile.bank.accountNumber': encrypt(acct),
       'fulfillerProfile.bank.ifsc': code,
       'fulfillerProfile.bank.bankName': String(bankName || '').trim(),
       'fulfillerProfile.bank.upiId': vpa,
       'fulfillerProfile.bank.updatedAt': new Date(),
     };
     const user = await User.findByIdAndUpdate(req.user._id, { $set: set }, { new: true }).select('-password');
-    res.json({ success: true, data: { bank: bankView(user.fulfillerProfile?.bank), user } });
+    const bank = bankView(user.fulfillerProfile?.bank);
+    res.json({ success: true, data: { bank, user: scrubSensitive(user.toObject()) } });
   } catch (err) {
     res.status(500).json({ success: false, error: 'Could not save your bank details.' });
   }

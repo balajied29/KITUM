@@ -13,7 +13,7 @@ import {
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, spacing, radius, type } from '../lib/theme';
-import { Header, Pill } from '../components/ui';
+import { Header, Pill, Skeleton, SkeletonText } from '../components/ui';
 import Icon from '../components/Icon';
 import { getTicket, replyTicket, closeTicket } from '../lib/api';
 
@@ -79,7 +79,28 @@ export default function SupportThreadScreen({ ticketId, onBack }) {
       <Header title="Request" onBack={onBack} right={ticket ? <Pill label={s.label} tone={s.tone} /> : null} />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'} keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}>
         {loading ? (
-          <View style={styles.center}><ActivityIndicator color={colors.primary} /></View>
+          <View style={styles.scroll}>
+            {/* subject + meta */}
+            <Skeleton width="65%" height={20} />
+            <Skeleton width="40%" height={12} style={{ marginTop: spacing.sm }} />
+
+            <View style={{ height: spacing.lg }} />
+
+            {/* a few message bubbles, alternating sides */}
+            {[
+              { mine: false, w: '78%', lines: 2 },
+              { mine: true, w: '60%', lines: 1 },
+              { mine: false, w: '85%', lines: 3 },
+              { mine: true, w: '50%', lines: 1 },
+            ].map((b, i) => (
+              <View key={i} style={[styles.bubbleRow, { justifyContent: b.mine ? 'flex-end' : 'flex-start' }]}>
+                <View style={[styles.bubble, { width: b.w }, b.mine ? styles.mine : styles.theirs]}>
+                  <SkeletonText lines={b.lines} lineHeight={12} gap={spacing.sm} />
+                  <Skeleton width="35%" height={9} style={{ marginTop: spacing.sm }} />
+                </View>
+              </View>
+            ))}
+          </View>
         ) : !ticket ? (
           <View style={styles.center}><Text style={type.caption}>Couldn’t load this request.</Text></View>
         ) : (

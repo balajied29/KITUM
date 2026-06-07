@@ -98,7 +98,14 @@ export default function InstantOrderPage() {
     });
 
   const selectedProduct = tankers.find((t) => t._id === selected);
-  const bill = selectedProduct ? priceQuote(selectedProduct.price) : null;
+  // Launch offer (display-only preview): if this customer still has free bookings,
+  // the next one waives the 5% platform fee. The SERVER is authoritative at
+  // creation — this just mirrors it so the breakdown is truthful before submit.
+  const freeLeft = user?.customerPerks?.freeBookingsRemaining || 0;
+  const willWaiveFee = freeLeft > 0;
+  const bill = selectedProduct ? priceQuote(selectedProduct.price, { waivePlatformFee: willWaiveFee }) : null;
+  // The regular 5% fee (struck through when waived).
+  const regularFee = selectedProduct ? priceQuote(selectedProduct.price).platformFee : 0;
 
   const handlePlaceOrder = async () => {
     setError('');
@@ -160,6 +167,16 @@ export default function InstantOrderPage() {
           <p className="text-xs text-text-muted mt-0.5">Get it now, or schedule for a slot.</p>
         </div>
       </div>
+
+      {/* Launch offer — free bookings remaining (server-authoritative perk) */}
+      {freeLeft > 0 && (
+        <div className="rounded-card border border-emerald-200 bg-emerald-50 px-3.5 py-2.5 mb-5 flex items-center gap-2.5">
+          <span className="text-lg leading-none">🎉</span>
+          <p className="text-xs font-medium text-emerald-800">
+            You have <span className="font-700">{freeLeft} free {freeLeft === 1 ? 'delivery' : 'deliveries'}</span> — no platform fee.
+          </p>
+        </div>
+      )}
 
       {/* When — deliver now or schedule for later */}
       <p className="text-xs font-700 text-text-muted uppercase tracking-wide mb-2">When</p>
@@ -318,8 +335,18 @@ export default function InstantOrderPage() {
           </div>
           <div className="flex justify-between py-1">
             <span className="text-text-muted">Platform fee (5%)</span>
-            <span className="text-text-main">₹{bill.platformFee}</span>
+            {bill.waivePlatformFee ? (
+              <span className="flex items-center gap-1.5">
+                <span className="text-text-muted line-through">₹{regularFee}</span>
+                <span className="font-700 text-emerald-600">FREE</span>
+              </span>
+            ) : (
+              <span className="text-text-main">₹{bill.platformFee}</span>
+            )}
           </div>
+          {bill.waivePlatformFee && (
+            <p className="text-[11px] font-medium text-emerald-600">🎉 Launch offer — platform fee waived</p>
+          )}
           <div className="flex justify-between py-1.5 border-t border-border-default mt-1 font-700 text-text-main">
             <span>Total</span>
             <span>₹{bill.total}</span>

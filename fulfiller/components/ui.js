@@ -1,16 +1,18 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
+  Animated,
+  Easing,
   StyleSheet,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { colors, spacing, radius, type, shadow } from '../lib/theme';
 
-// expo-linear-gradient is a native module — lazy-require it so the app still runs
+// expo-linear-gradient is a native module, lazy-require it so the app still runs
 // (with a solid-colour fallback) before it's installed + the dev build is rebuilt.
 let LinearGradient = null;
 try {
@@ -178,7 +180,7 @@ export function Avatar({ name, size = 44 }) {
   );
 }
 
-/** Icon in a soft tinted square — used for list/detail rows. */
+/** Icon in a soft tinted square, used for list/detail rows. */
 export function IconChip({ name, tone = 'primary', size = 40 }) {
   const t = TONES[tone] || TONES.primary;
   return (
@@ -229,6 +231,41 @@ export function StatTile({ icon, label, value, tone = 'primary' }) {
       </View>
       <Text style={styles.statValue} numberOfLines={1}>{value}</Text>
       <Text style={styles.statLabel}>{label}</Text>
+    </View>
+  );
+}
+
+/* ---------------- Skeleton (loading placeholder) ---------------- */
+
+/** A single pulsing placeholder block. Compose these to mirror real content
+ *  while it loads, so screens never flash empty or jump. */
+export function Skeleton({ width = '100%', height = 14, radius: rad = radius.sm, style }) {
+  const pulse = useRef(new Animated.Value(0.5)).current;
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, { toValue: 1, duration: 750, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 0.5, duration: 750, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [pulse]);
+  return <Animated.View style={[{ width, height, borderRadius: rad, backgroundColor: colors.border, opacity: pulse }, style]} />;
+}
+
+/** A stack of skeleton lines (last one shorter, like a real paragraph). */
+export function SkeletonText({ lines = 3, gap = spacing.sm, lineHeight = 12, style }) {
+  return (
+    <View style={style}>
+      {Array.from({ length: lines }).map((_, i) => (
+        <Skeleton
+          key={i}
+          height={lineHeight}
+          width={i === lines - 1 ? '60%' : '100%'}
+          style={{ marginTop: i === 0 ? 0 : gap }}
+        />
+      ))}
     </View>
   );
 }

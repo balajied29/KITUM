@@ -575,12 +575,28 @@ export default function TrackPage() {
                 <span className="text-text-main">{itemName}</span>
                 <span className="font-medium tabular-nums">₹{request.pricing?.fare ?? request.pricing?.amount}</span>
               </div>
-              {request.pricing?.platformFee != null && (
-                <div className="flex justify-between text-xs text-text-muted py-0.5">
-                  <span>Platform fee (5%)</span>
-                  <span className="tabular-nums">₹{request.pricing.platformFee}</span>
-                </div>
-              )}
+              {request.pricing?.platformFee != null && (() => {
+                const feeWaived = request.pricing.feeWaived || request.pricing.platformFee === 0;
+                const fareForFee = request.pricing.fare ?? request.pricing.amount;
+                return (
+                  <>
+                    <div className="flex justify-between text-xs text-text-muted py-0.5">
+                      <span>Platform fee (5%)</span>
+                      {feeWaived ? (
+                        <span className="flex items-center gap-1.5 tabular-nums">
+                          <span className="line-through">₹{Math.round(fareForFee * 0.05)}</span>
+                          <span className="font-700 text-emerald-600">FREE</span>
+                        </span>
+                      ) : (
+                        <span className="tabular-nums">₹{request.pricing.platformFee}</span>
+                      )}
+                    </div>
+                    {feeWaived && (
+                      <p className="text-[11px] font-medium text-emerald-600 py-0.5">🎉 Launch offer — platform fee waived</p>
+                    )}
+                  </>
+                );
+              })()}
               <div className="border-t border-dashed border-border-default my-2" />
               <div className="flex items-baseline justify-between">
                 <span className="text-sm font-700 text-text-main">Total paid</span>

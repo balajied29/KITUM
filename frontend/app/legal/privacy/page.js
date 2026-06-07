@@ -3,7 +3,7 @@ import { BUSINESS } from '@/constants/business';
 
 export const metadata = {
   title: 'Privacy Policy — KitUm',
-  description: 'How KitUm collects, uses, shares and protects your personal data, in line with India\'s DPDP Act 2023 and the IT Act 2000.',
+  description: 'How KitUm collects, uses, shares and protects your personal data, in line with India\'s DPDP Act 2023, the DPDP Rules 2025 and the IT Act 2000.',
 };
 
 export default function PrivacyPolicyPage() {
@@ -18,7 +18,8 @@ export default function PrivacyPolicyPage() {
       <p>
         We are committed to protecting your privacy and handling your personal data
         responsibly and in accordance with applicable Indian law, including the{' '}
-        <strong>Digital Personal Data Protection Act, 2023 (“DPDP Act”)</strong>, the{' '}
+        <strong>Digital Personal Data Protection Act, 2023 (“DPDP Act”)</strong> and the{' '}
+        <strong>Digital Personal Data Protection Rules, 2025 (“DPDP Rules”)</strong>, the{' '}
         <strong>Information Technology Act, 2000</strong> and the{' '}
         <strong>Information Technology (Reasonable Security Practices and Procedures and
         Sensitive Personal Data or Information) Rules, 2011 (“SPDI Rules”)</strong>.
@@ -130,10 +131,25 @@ export default function PrivacyPolicyPage() {
       <h2>8. How we protect your data</h2>
       <p>
         We maintain reasonable security practices and procedures as required under the IT
-        Act and SPDI Rules, including encryption of data in transit (HTTPS), hashing of
-        passwords, access controls, and restricting access to personal data to authorised
-        personnel. While we work hard to protect your data, no method of transmission or
-        storage is completely secure, and we cannot guarantee absolute security.
+        Act, the SPDI Rules and the DPDP Act, including:
+      </p>
+      <ul>
+        <li><strong>Encryption in transit</strong> — all traffic is served over HTTPS/TLS.</li>
+        <li><strong>Encryption at rest</strong> — sensitive identifiers such as PAN, driver’s
+          licence and bank-account numbers are encrypted in our database using strong
+          authenticated encryption (AES-256-GCM), so they are not readable from the underlying
+          data store.</li>
+        <li><strong>Hashed credentials</strong> — passwords are stored only as salted hashes
+          (bcrypt) and are never recoverable; session tokens are stored hashed and rotated.</li>
+        <li><strong>Private document storage</strong> — identity documents (such as a delivery
+          partner’s PAN and licence images) are kept in a private store and are accessible only
+          to authorised staff via short-lived, access-controlled links — never publicly.</li>
+        <li><strong>Access controls</strong> — access to personal data is restricted to
+          authorised personnel on a need-to-know basis.</li>
+      </ul>
+      <p>
+        While we work hard to protect your data, no method of transmission or storage is
+        completely secure, and we cannot guarantee absolute security.
       </p>
 
       <h2>9. Your rights</h2>
@@ -141,7 +157,7 @@ export default function PrivacyPolicyPage() {
       <ul>
         <li><strong>Access</strong> — request a summary of the personal data we hold about you and how we process it.</li>
         <li><strong>Correction &amp; updating</strong> — correct or update inaccurate or incomplete data (you can edit most details in the app).</li>
-        <li><strong>Erasure</strong> — request deletion of your personal data and/or closure of your account, subject to legal retention requirements.</li>
+        <li><strong>Erasure</strong> — delete your account and personal data at any time directly in the app (<em>Account → “Delete my account”</em>), or by contacting us, subject to legal retention requirements.</li>
         <li><strong>Withdraw consent</strong> — withdraw any consent you gave, at any time, with effect going forward.</li>
         <li><strong>Grievance redressal</strong> — raise a complaint about how we handle your data with our Grievance Officer (Section 12).</li>
         <li><strong>Nominate</strong> — nominate another individual to exercise your rights in the event of your death or incapacity.</li>

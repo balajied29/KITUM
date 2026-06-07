@@ -6,10 +6,12 @@ export const PLATFORM_FEE_PCT = 0.05;
 
 const r = (n) => Math.round(Number(n) || 0);
 
-/** Bill breakdown for a fare subtotal (Σ price × qty, rupees). */
-export function quote(fareSubtotal) {
+/** Bill breakdown for a fare subtotal (Σ price × qty, rupees).
+ *  `waivePlatformFee` mirrors the launch offer (first-K-bookings free) — but the
+ *  server is authoritative: at checkout, render the backend's pricing, not this. */
+export function quote(fareSubtotal, { waivePlatformFee = false } = {}) {
   const fare = r(fareSubtotal);
-  const platformFee = r(fare * PLATFORM_FEE_PCT);
+  const platformFee = waivePlatformFee ? 0 : r(fare * PLATFORM_FEE_PCT);
   const total = fare + platformFee;
-  return { fare, platformFee, total };
+  return { fare, platformFee, total, waivePlatformFee };
 }

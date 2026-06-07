@@ -72,7 +72,8 @@
           "photosPermission": "Allow KitUm Partner to upload photos of your PAN and driver's licence.",
           "cameraPermission": "Allow KitUm Partner to photograph your PAN and driver's licence."
         }
-      ]
+      ],
+      "expo-font"
     ],
     "extra": {
       "eas": {

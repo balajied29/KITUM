@@ -2,34 +2,40 @@
  * Single source of truth for business & legal details.
  *
  * ─────────────────────────────────────────────────────────────────────────────
- *  ⚠️  BEFORE GOING LIVE — replace every value wrapped in [ square brackets ].
- *      App stores (Play Store / App Store) and payment gateways (Razorpay)
- *      verify that the contact, address and legal-entity details in your
- *      policies match your real, registered business. Placeholder or
- *      mismatched details are a common reason reviews are rejected.
+ *  KitUm operates as a brand / trade name of a GST-registered sole
+ *  proprietorship (GSTIN 17MLZPS8388F1ZL, Meghalaya) — same legal entity and
+ *  GSTIN as the proprietor's other trade names. These registered details appear
+ *  ONLY on the legal & Contact pages where Indian law requires them (Consumer
+ *  Protection (E-Commerce) Rules 2020 + DPDP Act); the rest of the app UI uses
+ *  the KitUm brand. Play Store and Razorpay verify these against the GST record.
  *
- *      The Footer and all /legal/* pages read from this file, so you only
- *      need to fill these in ONCE here.
+ *  ▶ One value still to fill: WEBSITE (your deployed web app URL).
  * ─────────────────────────────────────────────────────────────────────────────
  */
+
+/* ── Registered details (shown only where legally required) ─────────────────── */
+const PROPRIETOR_NAME = 'Meubalajied Ki Wa O S Sungoh'; // legal name (per GST)
+const GRIEVANCE_OFFICER_NAME = 'Barister Mawrie'; // named grievance/complaints officer
+const GSTIN = '17MLZPS8388F1ZL'; // GST registration (proprietorship)
+const REGISTERED_ADDRESS = 'C/o S W Blah, Umpling, Donglumsurok, Shillong, East Khasi Hills, Meghalaya – 793006';
+const SUPPORT_EMAIL = 'meghalayawater@gmail.com'; // reachable inbox (also the grievance contact)
+const SUPPORT_PHONE = '+91 76300 03427';
+const WEBSITE = 'https://kitum.online'; // deployed web app URL
+/* ─────────────────────────────────────────────────────────────────────────── */
 
 export const BUSINESS = {
   /* ── Brand ─────────────────────────────────────────────────────────────── */
   brand: 'KitUm',
   tagline: 'Water delivered to your door.',
-  // Public-facing URL of the deployed web app (used in policies + app listings).
-  website: '[https://your-domain.com]',
+  website: WEBSITE,
 
-  /* ── Registered legal entity ───────────────────────────────────────────── */
-  // The exact name on your GST/registration certificate. If you operate as an
-  // individual, use "<Your Full Name>, Proprietor of KitUm".
-  legalName: '[Registered Business / Proprietor Name]',
-  // 'Sole Proprietorship' | 'Partnership' | 'LLP' | 'Private Limited Company'
-  entityType: '[Sole Proprietorship]',
-  registeredAddress: '[Building / Street, Locality, Shillong, Meghalaya – PIN code]',
-  // Leave '' if not applicable (e.g. turnover below the GST threshold).
-  gstin: '[GSTIN, if registered]',
-  cin: '', // Company Identification Number — only for a Private Limited Company / LLP
+  /* ── Legal entity (registered sole proprietorship) ─────────────────────── */
+  // KitUm is a brand/trade name operated under this GST-registered proprietorship.
+  legalName: PROPRIETOR_NAME,
+  entityType: 'Sole Proprietorship',
+  registeredAddress: REGISTERED_ADDRESS,
+  gstin: GSTIN,
+  cin: '', // companies only — not applicable to a sole proprietor
 
   /* ── Where you operate ─────────────────────────────────────────────────── */
   operatingCity: 'Shillong',
@@ -39,23 +45,24 @@ export const BUSINESS = {
   jurisdictionCity: 'Shillong',
 
   /* ── Customer contact (shown publicly — must be reachable) ──────────────── */
-  supportEmail: 'meghalayawater@gmail.com',
-  phone: '+91 76300 03427',
-  // Human-readable support hours.
+  supportEmail: SUPPORT_EMAIL,
+  phone: SUPPORT_PHONE,
   hours: 'Monday to Sunday, 7:00 AM – 9:00 PM IST',
 
   /* ── Grievance Officer ─────────────────────────────────────────────────── */
-  // Required by the Consumer Protection (E-Commerce) Rules, 2020 and the Digital
-  // Personal Data Protection Act, 2023. Must be a named, reachable person.
+  // Required by the Consumer Protection (E-Commerce) Rules, 2020 and the DPDP
+  // Act, 2023. A named, reachable person who handles data & consumer complaints.
   grievanceOfficer: {
-    name: '[Grievance Officer Full Name]',
+    name: GRIEVANCE_OFFICER_NAME,
     designation: 'Grievance Officer',
-    email: '[grievance@your-domain.com]',
-    phone: '[+91 XXXXX XXXXX]',
-    address: '[Office Address for grievances, Shillong, Meghalaya – PIN]',
+    email: SUPPORT_EMAIL,
+    phone: SUPPORT_PHONE,
+    address: REGISTERED_ADDRESS,
   },
 
   /* ── Payments ──────────────────────────────────────────────────────────── */
+  // Onboard Razorpay as a Proprietorship using GSTIN 17MLZPS8388F1ZL + the
+  // proprietor's PAN and the business bank account.
   paymentGateway: 'Razorpay Software Private Limited',
   paymentMethods: 'UPI, debit/credit cards, net banking and wallets (via Razorpay), and Cash on Delivery',
   currency: 'INR',
@@ -63,7 +70,7 @@ export const BUSINESS = {
 
   /* ── Policy versioning ─────────────────────────────────────────────────── */
   // Update whenever you change any policy text.
-  lastUpdated: '3 June 2026',
+  lastUpdated: '7 June 2026',
   effectiveDate: '3 June 2026',
 };
 

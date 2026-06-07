@@ -13,7 +13,7 @@ import {
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { colors, spacing, radius, type } from '../lib/theme';
-import { Header, Card, Input, Button, SectionLabel, MenuRow, Pill } from '../components/ui';
+import { Header, Card, Input, Button, SectionLabel, MenuRow, Pill, Skeleton } from '../components/ui';
 import Icon from '../components/Icon';
 import { getMyTickets, createTicket } from '../lib/api';
 import { SUPPORT_PHONE, SUPPORT_EMAIL } from '../lib/support';
@@ -71,7 +71,17 @@ export default function SupportScreen({ user, onBack, seedTemplate }) {
         {/* Existing requests */}
         <SectionLabel style={styles.label}>Your requests</SectionLabel>
         {tickets == null ? (
-          <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.lg }} />
+          <Card padded={false} style={styles.menuCard}>
+            {Array.from({ length: 4 }).map((_, i) => (
+              <View key={i} style={[styles.ticketRow, i < 3 && styles.divider]}>
+                <View style={{ flex: 1, marginRight: spacing.md }}>
+                  <Skeleton width="65%" height={15} />
+                  <Skeleton width="40%" height={11} style={{ marginTop: spacing.xs }} />
+                </View>
+                <Skeleton width={72} height={24} radius={radius.pill} />
+              </View>
+            ))}
+          </Card>
         ) : tickets.length === 0 ? (
           <Card>
             <Text style={styles.empty}>No requests yet. Pick a topic below and our team will help you out.</Text>

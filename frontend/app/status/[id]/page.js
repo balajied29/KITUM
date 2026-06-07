@@ -137,18 +137,32 @@ export default function OrderStatusPage() {
             </div>
           ))}
           <div className="border-t border-border-default mt-2 pt-2 space-y-1">
-            {order.platformFee != null && (
-              <>
-                <div className="flex justify-between text-sm text-text-muted">
-                  <span>Subtotal</span>
-                  <span>₹{order.fare ?? order.totalAmount - order.platformFee}</span>
-                </div>
-                <div className="flex justify-between text-sm text-text-muted">
-                  <span>Platform fee (5%)</span>
-                  <span>₹{order.platformFee}</span>
-                </div>
-              </>
-            )}
+            {order.platformFee != null && (() => {
+              const subtotal = order.fare ?? order.totalAmount - order.platformFee;
+              const feeWaived = order.feeWaived || order.platformFee === 0;
+              return (
+                <>
+                  <div className="flex justify-between text-sm text-text-muted">
+                    <span>Subtotal</span>
+                    <span>₹{subtotal}</span>
+                  </div>
+                  <div className="flex justify-between text-sm text-text-muted">
+                    <span>Platform fee (5%)</span>
+                    {feeWaived ? (
+                      <span className="flex items-center gap-1.5">
+                        <span className="line-through">₹{Math.round(subtotal * 0.05)}</span>
+                        <span className="font-700 text-emerald-600">FREE</span>
+                      </span>
+                    ) : (
+                      <span>₹{order.platformFee}</span>
+                    )}
+                  </div>
+                  {feeWaived && (
+                    <p className="text-[11px] font-medium text-emerald-600">🎉 Launch offer — platform fee waived</p>
+                  )}
+                </>
+              );
+            })()}
             <div className="flex justify-between text-sm font-700">
               <span>Total</span>
               <span>₹{order.totalAmount}</span>
