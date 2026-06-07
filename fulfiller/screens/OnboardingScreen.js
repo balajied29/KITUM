@@ -121,6 +121,7 @@ export default function OnboardingScreen({ onBack }) {
         phone: f.phone.trim(),
         vehicleNumber: f.veh.trim(),
         capacityLitres: f.cap,
+        consent: agree,
         photo,
       });
       // Hold the session and show the success screen; the CTA there enters the app.

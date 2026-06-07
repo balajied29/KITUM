@@ -12,6 +12,11 @@ const DeliveryRequest = require('../models/DeliveryRequest.model');
 const SupportTicket = require('../models/SupportTicket.model');
 const { REQUEST_STATUS } = require('../shared/constants');
 const { scrubSensitive } = require('../services/fieldCrypto');
+const { recordConsent } = require('../services/consent');
+const ConsentLog = require('../models/ConsentLog.model');
+
+// Accepts the consent flag from JSON (true) or multipart (the string 'true').
+const consentGiven = (v) => v === true || v === 'true';
 
 // multipart image mimetype → file extension (for the signup selfie).
 const MIME_EXT = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/heic': 'heic', 'image/heif': 'heif' };
@@ -33,6 +38,8 @@ const register = async (req, res) => {
       return res.status(400).json({ success: false, error: 'Name, email and password are required.' });
     if (password.length < 6)
       return res.status(400).json({ success: false, error: 'Password must be at least 6 characters.' });
+    if (!consentGiven(req.body.consent))
+      return res.status(400).json({ success: false, error: 'Please accept the Terms & Privacy Policy to continue.' });
 
     const existing = await User.findOne({ email: email.toLowerCase().trim() });
     if (existing && existing.password)
@@ -54,6 +61,9 @@ const register = async (req, res) => {
     // (idempotent — claimSlot no-ops if they already hold a grant or the cap is full).
     await promotions.grantCustomerPerk(user._id).catch(() => {});
     const fresh = await User.findById(user._id);
+
+    // DPDP: persist a timestamped, attributable record of the consent given.
+    await recordConsent(req, { userId: user._id, purpose: 'account_signup', role: 'customer', documents: ['terms', 'privacy'] });
 
     const pair = await tokens.issuePair(user._id);
     res.status(201).json({ success: true, data: { ...pair, user: sanitize(fresh || user) } });
@@ -156,6 +166,8 @@ const partnerSignup = async (req, res) => {
     // A live profile photo (camera selfie) is mandatory for identity verification.
     if (!req.file)
       return res.status(400).json({ success: false, error: 'A profile photo is required.' });
+    if (!consentGiven(req.body.consent))
+      return res.status(400).json({ success: false, error: 'Please accept the Terms & Privacy Policy to continue.' });
 
     const existing = await User.findOne({ email: email.toLowerCase().trim() });
     if (existing)
@@ -192,6 +204,9 @@ const partnerSignup = async (req, res) => {
         console.error('signup photo upload failed:', e);
       }
     }
+
+    // DPDP: record the consent the partner gave (this covers the sensitive KYC data too).
+    await recordConsent(req, { userId: user._id, purpose: 'partner_signup', role: 'fulfiller', documents: ['terms', 'privacy'] });
 
     // Issue a session so the applicant lands straight in the (gated) dashboard
     // and can track their approval status.
@@ -308,6 +323,8 @@ const deleteMe = async (req, res) => {
     await Promise.all([
       Address.deleteMany({ userId: uid }),
       SupportTicket.updateMany({ userId: uid }, { $set: { contactPhone: null } }),
+      ConsentLog.updateMany({ userId: uid }, { $unset: { ip: '', userAgent: '' } }), // keep the consent event, drop its PII
+
       Order.updateMany(
         { userId: uid },
         {

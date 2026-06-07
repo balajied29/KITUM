@@ -13,7 +13,7 @@ export default function PrivacyPolicyPage() {
   return (
     <LegalLayout
       title="Privacy Policy"
-      intro={`This Privacy Policy explains how ${B.legalName} (“${B.brand}”, “we”, “us” or “our”) collects, uses, discloses, retains and protects your personal data when you use the ${B.brand} mobile application and website (together, the “Platform”) to order water delivery in ${B.operatingCity}, ${B.operatingState}.`}
+      intro={`This Privacy Policy explains how ${B.legalName} (“${B.brand}”, “we”, “us” or “our”) collects, uses, discloses, retains and protects your personal data when you use the ${B.brand} customer and delivery-partner apps and our website (together, the “Platform”) to order water delivery, or to provide delivery services as a delivery partner, in ${B.operatingCity}, ${B.operatingState}.`}
     >
       <p>
         We are committed to protecting your privacy and handling your personal data
@@ -60,6 +60,23 @@ export default function PrivacyPolicyPage() {
         our payment gateway (see Section 4).
       </p>
 
+      <h3>d) If you are a Delivery Partner</h3>
+      <p>
+        If you register as a delivery partner (tanker operator/driver), we additionally collect
+        your <strong>identity &amp; verification documents</strong> (a live selfie, and your PAN and
+        driving-licence numbers and images — “KYC”), your <strong>vehicle details</strong> (vehicle
+        number and tanker capacity), your <strong>bank or UPI settlement details</strong>, your{' '}
+        <strong>precise live location</strong> while you are online or on a delivery, and your device
+        push token. We use this to verify your eligibility, match and route you to nearby orders,
+        enable live tracking, settle your earnings, and meet legal and tax obligations. While you are
+        delivering, the customer is shown your name, photo, vehicle and live location so they can
+        identify you; your KYC documents are stored privately and encrypted (see Section 8), are never
+        shown to customers, and are used only for verification. The rights in Section 9 and the
+        retention &amp; deletion rules in Section 6 (and our{' '}
+        <a href="/legal/data-deletion">Account &amp; Data Deletion</a> policy) apply to delivery
+        partners too.
+      </p>
+
       <h2>2. How we use your information</h2>
       <p>We use your personal data for the following purposes:</p>
       <ul>
@@ -87,6 +104,13 @@ export default function PrivacyPolicyPage() {
         <li><strong>Legal &amp; safety</strong> — government authorities, regulators or law-enforcement where required by law, to enforce our terms, or to protect the rights, safety and property of our users, the public or {B.brand}.</li>
         <li><strong>Business transfers</strong> — if our business is merged, acquired or reorganised, your data may be transferred as part of that transaction, subject to this Policy.</li>
       </ul>
+      <p>
+        <strong>Where your data is processed.</strong> Your personal data is primarily stored and
+        processed in India. Some service providers (such as mapping, messaging or cloud providers)
+        may process limited data on servers outside India; where they do, we take reasonable steps to
+        keep it protected consistent with this Policy and applicable law. We do not transfer personal
+        data to any country or territory restricted by the Government of India under the DPDP Act.
+      </p>
 
       <h2>4. Payments</h2>
       <p>
@@ -117,7 +141,8 @@ export default function PrivacyPolicyPage() {
         afterwards — and as required to comply with legal, tax, accounting and dispute-resolution
         obligations. Transaction and invoice records may be retained for the period required
         under applicable tax and commercial laws. When data is no longer required, we delete
-        or anonymise it.
+        or anonymise it. See our <a href="/legal/data-deletion">Account &amp; Data Deletion</a>{' '}
+        policy for how to delete your account and exactly what is removed or retained.
       </p>
 
       <h2>7. Cookies &amp; similar technologies</h2>
@@ -157,7 +182,7 @@ export default function PrivacyPolicyPage() {
       <ul>
         <li><strong>Access</strong> — request a summary of the personal data we hold about you and how we process it.</li>
         <li><strong>Correction &amp; updating</strong> — correct or update inaccurate or incomplete data (you can edit most details in the app).</li>
-        <li><strong>Erasure</strong> — delete your account and personal data at any time directly in the app (<em>Account → “Delete my account”</em>), or by contacting us, subject to legal retention requirements.</li>
+        <li><strong>Erasure</strong> — delete your account and personal data at any time directly in the app (<em>Account → “Delete my account”</em>), or by contacting us, subject to legal retention requirements (see our <a href="/legal/data-deletion">Account &amp; Data Deletion</a> policy).</li>
         <li><strong>Withdraw consent</strong> — withdraw any consent you gave, at any time, with effect going forward.</li>
         <li><strong>Grievance redressal</strong> — raise a complaint about how we handle your data with our Grievance Officer (Section 12).</li>
         <li><strong>Nominate</strong> — nominate another individual to exercise your rights in the event of your death or incapacity.</li>

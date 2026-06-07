@@ -34,6 +34,7 @@ const {
   listGrants,
   grantToUser,
   revokeGrant,
+  seedCampaigns,
 } = require('../controllers/campaign.controller');
 
 router.use(protect, adminOnly);
@@ -73,6 +74,7 @@ router.get('/reviews', adminListReviews);
 router.patch('/reviews/:id/status', adminSetReviewStatus);
 
 // Launch-offer campaigns (acquisition phase) — see docs/launch-offers-design.md
+router.post('/campaigns/seed', seedCampaigns); // idempotent; populate the table from the UI
 router.get('/campaigns', listCampaigns);
 router.patch('/campaigns/:key', updateCampaign);
 router.get('/campaigns/:key/grants', listGrants);

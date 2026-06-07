@@ -6,6 +6,7 @@ import {
   adminGetCampaignGrants,
   adminGrantCampaign,
   adminRevokeCampaign,
+  adminSeedCampaigns,
 } from '@/lib/api';
 
 const fmtDate = (d) => (d ? new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : '—');
@@ -34,15 +35,40 @@ export default function AdminCampaignsPage() {
   const [campaigns, setCampaigns] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [seeding, setSeeding] = useState(false);
 
   const fetchAll = () => {
     setLoading(true);
+    setError('');
     adminGetCampaigns()
       .then((res) => setCampaigns(res.data.data))
-      .catch(() => setError('Could not load campaigns.'))
+      .catch((e) =>
+        setError(
+          e?.response?.status === 404
+            ? 'Campaigns API not found — deploy the latest backend to api.kitum.online.'
+            : 'Could not load campaigns.'
+        )
+      )
       .finally(() => setLoading(false));
   };
   useEffect(fetchAll, []);
+
+  const handleSeed = async () => {
+    setSeeding(true);
+    setError('');
+    try {
+      const res = await adminSeedCampaigns();
+      setCampaigns(res.data.data);
+    } catch (e) {
+      setError(
+        e?.response?.status === 404
+          ? 'Seeding API not found — deploy the latest backend to api.kitum.online.'
+          : 'Could not seed campaigns.'
+      );
+    } finally {
+      setSeeding(false);
+    }
+  };
 
   return (
     <div>
@@ -60,7 +86,14 @@ export default function AdminCampaignsPage() {
       ) : campaigns.length === 0 ? (
         <div className="card text-center py-12">
           <p className="text-sm font-700 text-text-main">No campaigns found</p>
-          <p className="text-xs text-text-muted mt-1">Seed the launch campaigns on the backend to manage them here.</p>
+          <p className="text-xs text-text-muted mt-1 mb-4">Create the two launch campaigns (15 drivers / 90 days, 100 customers / 3 free bookings). Idempotent, safe to re-run.</p>
+          <button
+            onClick={handleSeed}
+            disabled={seeding}
+            className="inline-flex items-center justify-center gap-2 bg-primary text-white font-700 text-sm rounded-btn px-5 py-2.5 disabled:opacity-60"
+          >
+            {seeding ? 'Seeding…' : 'Seed campaigns'}
+          </button>
         </div>
       ) : (
         <div className="flex flex-col gap-5">

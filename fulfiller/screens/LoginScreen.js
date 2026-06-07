@@ -103,6 +103,7 @@ export default function LoginScreen({ initialMode = 'signin', onBack } = {}) {
         phone: form.phone.trim(),
         vehicleNumber: form.vehicleNumber.trim(),
         capacityLitres: form.capacityLitres,
+        consent: agree,
         photo,
       });
       // Signup returns a session — land straight in the awaiting-approval dashboard.

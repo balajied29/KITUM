@@ -36,7 +36,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const res = mode === 'signup'
-        ? await register(name, email, password)
+        ? await register(name, email, password, consent)
         : await login(email, password);
       const { accessToken, refreshToken, user } = res.data.data;
       setAuth(user, accessToken, refreshToken);

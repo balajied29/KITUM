@@ -6,10 +6,15 @@ const {
   getRequestById,
   cancelRequest,
   rateRequest,
+  getAvailability,
 } = require('../controllers/request.controller');
 const { protect } = require('../middleware/auth.middleware');
 const { requestLimiter } = require('../middleware/rateLimit');
 const { validate } = require('../middleware/validate');
+
+// PUBLIC: nearby-availability counts (cached snapshot, no sensitive data). Defined
+// before `protect` so the home can show "tankers nearby" without an auth round-trip.
+router.get('/availability', getAvailability);
 
 router.use(protect);
 

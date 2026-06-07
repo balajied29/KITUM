@@ -81,5 +81,6 @@ export const LEGAL_LINKS = [
   { href: '/legal/terms',    label: 'Terms & Conditions' },
   { href: '/legal/refunds',  label: 'Refund & Cancellation' },
   { href: '/legal/shipping', label: 'Shipping & Delivery' },
+  { href: '/legal/data-deletion', label: 'Account & Data Deletion' },
   { href: '/contact',        label: 'Contact Us' },
 ];

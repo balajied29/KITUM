@@ -4,6 +4,7 @@ const User = require('../models/User.model');
 const dispatch = require('../services/dispatch/DispatchManager');
 const pricing = require('../shared/pricing');
 const promotions = require('../services/promotions');
+const availability = require('../services/availability');
 const { REQUEST_STATUS } = require('../shared/constants');
 
 /** Pull the litre capacity out of a product's `unit` string ("1000 Litres" → 1000). */
@@ -154,4 +155,28 @@ const rateRequest = async (req, res) => {
   }
 };
 
-module.exports = { createRequest, getMyRequests, getRequestById, cancelRequest, rateRequest };
+/**
+ * Lightweight nearby-availability counts for the customer home ("3 tankers nearby",
+ * "available now"). Display-only; backed by an in-memory snapshot (see
+ * services/availability.js) so it never runs a per-request geo query.
+ * Query: ?lat=&lng= (optional; citywide if omitted) &sizes=500,1000,... &radiusKm=
+ */
+const getAvailability = async (req, res) => {
+  try {
+    const lat = Number(req.query.lat);
+    const lng = Number(req.query.lng ?? req.query.lon); // store uses `lon`
+    const radiusKm = Number(req.query.radiusKm) || Number(process.env.AVAILABILITY_RADIUS_KM) || 10;
+    const sizes = String(req.query.sizes || '')
+      .split(',')
+      .map((s) => Number(s.trim()))
+      .filter((n) => n > 0);
+
+    const point = Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : {};
+    const data = await availability.availability({ ...point, radiusKm, sizes });
+    res.json({ success: true, data });
+  } catch (err) {
+    res.status(500).json({ success: false, error: 'Failed to fetch availability' });
+  }
+};
+
+module.exports = { createRequest, getMyRequests, getRequestById, cancelRequest, rateRequest, getAvailability };

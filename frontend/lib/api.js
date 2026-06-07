@@ -40,7 +40,7 @@ api.interceptors.response.use(
 );
 
 // Auth
-export const register        = (name, email, password) => api.post('/auth/register', { name, email, password });
+export const register        = (name, email, password, consent) => api.post('/auth/register', { name, email, password, consent });
 export const login           = (email, password)        => api.post('/auth/login',    { email, password });
 export const getMe           = ()                       => api.get('/auth/me');
 export const updateProfile   = (data)                   => api.patch('/auth/me', data);
@@ -78,6 +78,9 @@ export const getMyRequests   = ()        => api.get('/requests');
 export const getRequestById  = (id)      => api.get(`/requests/${id}`);
 export const cancelRequest   = (id)      => api.post(`/requests/${id}/cancel`);
 export const rateRequest     = (id, rating) => api.post(`/requests/${id}/rate`, { rating });
+// Nearby-fulfiller availability (display-only counts; public + cached server-side).
+// params: { lat, lng, sizes: '500,1000,...', radiusKm }
+export const getAvailability = (params) => api.get('/requests/availability', { params });
 
 // Saved addresses
 export const getAddresses   = ()         => api.get('/addresses');
@@ -120,6 +123,7 @@ export const adminUpdateCampaign    = (key, data)    => api.patch(`/admin/campai
 export const adminGetCampaignGrants = (key)          => api.get(`/admin/campaigns/${key}/grants`);
 export const adminGrantCampaign     = (key, payload) => api.post(`/admin/campaigns/${key}/grant`, payload);
 export const adminRevokeCampaign    = (key, userId)  => api.post(`/admin/campaigns/${key}/revoke`, { userId });
+export const adminSeedCampaigns     = ()             => api.post('/admin/campaigns/seed');
 
 // Reviews
 export const createReview         = (payload)     => api.post('/reviews', payload);

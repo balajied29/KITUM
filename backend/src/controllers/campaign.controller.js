@@ -116,4 +116,16 @@ const revokeGrant = async (req, res) => {
   }
 };
 
-module.exports = { listCampaigns, updateCampaign, listGrants, grantToUser, revokeGrant };
+/** POST /admin/campaigns/seed — idempotently create the launch campaigns, then return them.
+ *  Self-serve so ops can populate the table from the UI without a redeploy/restart. */
+const seedCampaigns = async (req, res) => {
+  try {
+    await promotions.seedCampaigns();
+    const campaigns = await Campaign.find().sort({ audience: 1, key: 1 }).lean();
+    res.json({ success: true, data: campaigns });
+  } catch (e) {
+    res.status(500).json({ success: false, error: 'Failed to seed campaigns' });
+  }
+};
+
+module.exports = { listCampaigns, updateCampaign, listGrants, grantToUser, revokeGrant, seedCampaigns };

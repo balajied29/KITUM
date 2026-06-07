@@ -35,7 +35,9 @@ export default function TermsPage() {
         and, for each order they complete, receive the delivery fare less a platform
         commission of {FEE_PCT}% retained by {B.brand} for use of the Platform and its
         services. The specific commercial terms applicable to Delivery Partners are set out in
-        the partner app and the agreement they accept when they join.
+        the partner app and the agreement they accept when they join. Delivery Partners source and
+        supply the water they deliver and are responsible for meeting the quality, safety and
+        licensing requirements applicable to it.
       </p>
 
       <h2>2. Eligibility</h2>
