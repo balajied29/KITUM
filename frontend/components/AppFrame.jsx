@@ -5,14 +5,15 @@ import LocationModal from '@/components/LocationModal';
 
 /**
  * Chooses the shell per area:
- *  - /admin/*  → full-width (the admin layout provides its own sidebar shell).
+ *  - /admin/*    → full-width (the admin layout provides its own sidebar shell).
+ *  - /partner    → full-bleed marketing landing (no customer bottom nav / location modal).
  *  - everything else → the centered phone-width PWA column + bottom nav + location modal.
  * (Previously the phone column wrapped EVERYTHING, which squeezed the admin UI.)
  */
 export default function AppFrame({ children }) {
   const pathname = usePathname();
 
-  if (pathname?.startsWith('/admin')) return <>{children}</>;
+  if (pathname?.startsWith('/admin') || pathname?.startsWith('/partner')) return <>{children}</>;
 
   return (
     <>
