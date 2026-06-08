@@ -36,6 +36,7 @@ export default function Footer() {
             <li><Link href="/order/instant" className="text-sm text-text-body hover:text-primary transition-colors">Order a tanker</Link></li>
             <li><Link href="/orders" className="text-sm text-text-body hover:text-primary transition-colors">My orders</Link></li>
             <li><Link href="/account" className="text-sm text-text-body hover:text-primary transition-colors">My account</Link></li>
+            <li><Link href="/partner" className="text-sm text-text-body hover:text-primary transition-colors">Become a Partner</Link></li>
             <li><Link href="/contact" className="text-sm text-text-body hover:text-primary transition-colors">Contact &amp; support</Link></li>
           </ul>
         </div>

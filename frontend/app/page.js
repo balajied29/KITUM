@@ -30,15 +30,21 @@ const ChevDown = ({ className = 'w-3 h-3' }) => (
 );
 
 const TRUST = [
-  { label: 'Live tracking', sub: 'See your tanker move', icon: (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0037b0" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11" /></svg>
-  ) },
-  { label: 'UPI & cash', sub: 'Pay how you want', icon: (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0037b0" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2.5" /><path d="M16 13h.01" /></svg>
-  ) },
-  { label: 'On-time slots', sub: 'We respect your time', icon: (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0037b0" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.5l4.5 4.5L19 7" /></svg>
-  ) },
+  {
+    label: 'Live tracking', sub: 'See your tanker move', icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0037b0" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11" /></svg>
+    )
+  },
+  {
+    label: 'UPI & cash', sub: 'Pay how you want', icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0037b0" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2.5" /><path d="M16 13h.01" /></svg>
+    )
+  },
+  {
+    label: 'On-time slots', sub: 'We respect your time', icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0037b0" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.5l4.5 4.5L19 7" /></svg>
+    )
+  },
 ];
 
 export default function HomePage() {
@@ -61,7 +67,7 @@ export default function HomePage() {
           .sort((a, b) => litresOf(a) - litresOf(b));
         setTankers(list);
       })
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setLoading(false));
   }, []);
 
@@ -137,6 +143,33 @@ export default function HomePage() {
           </Link>
         </div>
       </header>
+
+      {/* Become a partner */}
+      <section>
+        <Link
+          href="/partner"
+          className="relative block overflow-hidden rounded-[20px] bg-primary text-white shadow-[0_8px_24px_-10px_rgba(0,55,176,0.5)] active:scale-[0.99] transition-transform mt-5 mx-5"
+        >
+          {/* water-ripple motif */}
+          <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+            <span className="absolute rounded-full bg-[#00298A]" style={{ width: 150, height: 150, top: -70, right: -50 }} />
+            <span className="absolute rounded-full border-[1.5px] border-white/[0.14]" style={{ width: 178, height: 178, top: -84, right: -64 }} />
+            <span className="absolute rounded-full border-[1.5px] border-white/[0.07]" style={{ width: 230, height: 230, top: -110, right: -90 }} />
+          </span>
+          <div className="relative z-[2] flex items-center gap-3.5 p-4">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[13px] bg-white/[0.14] border border-white/20">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M10 17h4V5H2v12h2" /><path d="M14 9h4l4 4v4h-2" /><circle cx="7.5" cy="17.5" r="2" /><circle cx="17.5" cy="17.5" r="2" /></svg>
+            </span>
+            <div className="flex-1 min-w-0">
+              <p className="text-[15.5px] font-extrabold tracking-[-0.3px]">Own a tanker? Drive with KitUm</p>
+              <p className="text-[12.5px] font-medium text-white/[0.76] mt-0.5 leading-snug">Be your own boss. Earn on your own schedule.</p>
+            </div>
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-primary">
+              <Arrow className="w-[18px] h-[18px]" />
+            </span>
+          </div>
+        </Link>
+      </section>
 
       {/* Launch offer — free bookings remaining */}
       {freeLeft > 0 && (
@@ -237,6 +270,8 @@ export default function HomePage() {
             ))}
           </div>
         </section>
+
+
 
         <p className="text-center text-[12.5px] font-semibold text-text-muted pb-1">
           Serving <span className="text-text-main font-700">50+ areas</span> across Shillong &amp; Meghalaya
