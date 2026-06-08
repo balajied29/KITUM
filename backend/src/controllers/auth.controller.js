@@ -72,6 +72,47 @@ const register = async (req, res) => {
   }
 };
 
+/**
+ * Seamless "guest" account for a customer's FIRST booking — no login screen.
+ * The account is passwordless and keyed by phone via a reserved guest email, so a
+ * repeat booking from the same number lands in the same account, and the client
+ * persists the returned session to stay logged in.
+ *
+ * Security note: re-auth is phone-only (no OTP yet). Acceptable for low-stakes,
+ * pay-at-completion accounts; gate behind OTP/Truecaller before this holds anything
+ * sensitive at scale. A real (password) account with the same phone is a SEPARATE
+ * record (different email), so this can never hijack a secured account.
+ */
+const quick = async (req, res) => {
+  try {
+    const name = String(req.body.name || '').trim();
+    const phone = String(req.body.phone || '').replace(/\D/g, '').slice(-10); // last 10 digits (India)
+    if (phone.length !== 10) {
+      return res.status(400).json({ success: false, error: 'A valid 10-digit phone number is required.' });
+    }
+    const guestEmail = `g_${phone}@guest.kitum.online`;
+    let user = await User.findOne({ email: guestEmail });
+    let created = false;
+    if (!user) {
+      user = await User.create({ name: name || 'Customer', email: guestEmail, phone, role: 'customer' });
+      created = true;
+      // Enroll the launch-offer customer perk (idempotent).
+      await promotions.grantCustomerPerk(user._id).catch(() => {});
+      user = await User.findById(user._id);
+    } else if (name && user.name !== name) {
+      user.name = name;
+      await user.save();
+    }
+    if (!canAuthenticate(user)) {
+      return res.status(403).json({ success: false, error: 'This account cannot be used.' });
+    }
+    const pair = await tokens.issuePair(user._id);
+    res.status(created ? 201 : 200).json({ success: true, data: { ...pair, user: sanitize(user) } });
+  } catch (err) {
+    res.status(500).json({ success: false, error: 'Could not start your session. Please try again.' });
+  }
+};
+
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -374,4 +415,4 @@ const deleteMe = async (req, res) => {
   }
 };
 
-module.exports = { register, login, refresh, logout, getMe, updateMe, deleteMe, forgotPassword, resetPassword, partnerSignup };
+module.exports = { register, quick, login, refresh, logout, getMe, updateMe, deleteMe, forgotPassword, resetPassword, partnerSignup };

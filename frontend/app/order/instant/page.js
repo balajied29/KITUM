@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { getProducts, createRequest, getAddresses, createOrder } from '@/lib/api';
+import { getProducts, createRequest, getAddresses, createOrder, ensureCustomerAuth } from '@/lib/api';
 import { reverseGeocode } from '@/lib/maps';
 import { useAuthStore, useLocationStore, useCartStore } from '@/lib/store';
 import { TankerIcon, CheckIcon } from '@/components/icons';
@@ -48,10 +48,8 @@ export default function InstantOrderPage() {
   const [geoBusy, setGeoBusy] = useState(false);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    if (!accessToken) router.replace('/login?next=/order/instant');
-  }, [accessToken, router]);
-
+  // No login gate — browse + build the order freely; we create the account at
+  // place-order time from the contact details (see handlePlaceOrder).
   useEffect(() => {
     if (user) {
       setName(user.name || '');
@@ -71,7 +69,10 @@ export default function InstantOrderPage() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-    getAddresses().then((res) => setAddresses(res.data.data)).catch(() => {});
+    // Saved addresses only exist for a signed-in customer.
+    if (useAuthStore.getState().accessToken) {
+      getAddresses().then((res) => setAddresses(res.data.data)).catch(() => {});
+    }
   }, []);
 
   const useCurrentLocation = () => {
@@ -116,6 +117,16 @@ export default function InstantOrderPage() {
     if (when === 'later' && !slot?._id) return setError('Please choose a delivery slot.');
 
     setSubmitting(true);
+
+    // Seamless auth: if not signed in, create (or resume) a guest account from the
+    // contact name + phone, then continue. No login screen.
+    try {
+      await ensureCustomerAuth(name.trim(), phone.trim());
+    } catch {
+      setError('Could not start your session. Please check your phone number and try again.');
+      setSubmitting(false);
+      return;
+    }
 
     // Nothing is charged now — payment is collected at delivery (cash, or UPI at
     // the door). Both flows just create the order/request and navigate.

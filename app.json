@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "9eca37a7-7346-439d-b2f7-d0cfe2b0b43f"
+      }
+    },
+    "android": {
+      "package": "com.webgaurav02.kitum"
+    }
+  }
+}

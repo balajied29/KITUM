@@ -46,7 +46,7 @@ export default function PartnerLandingPage() {
     <main className="relative min-h-dvh overflow-hidden bg-primary text-white">
       {/* Water motif — concentric ripples radiating from the corner "drop point" */}
       <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
-        <span className="absolute rounded-full bg-[#00298A]" style={{ width: 300, height: 300, top: -96, right: -90 }} />
+        <span className="absolute rounded-full blur-xl bg-[#00298A]/60" style={{ width: 300, height: 300, top: -96, right: -90 }} />
         <span className="absolute rounded-full border-[1.5px] border-white/[0.20]" style={{ width: 330, height: 330, top: -111, right: -105 }} />
         <span className="absolute rounded-full border-[1.5px] border-white/[0.12]" style={{ width: 412, height: 412, top: -152, right: -146 }} />
         <span className="absolute rounded-full border-[1.5px] border-white/[0.07]" style={{ width: 504, height: 504, top: -198, right: -192 }} />
@@ -65,15 +65,15 @@ export default function PartnerLandingPage() {
 
         {/* Ownership headline — "Your" lighter, the nouns heavy, "Money." in a pill */}
         <div className="mb-7">
-          <p className="font-display text-[40px] font-extrabold leading-[46px] tracking-[-1.4px]">
+          <p className="font-display text-[40px] font-extrabold leading-[55px] tracking-[-1.4px]">
             <span className="font-medium text-white/[0.78]">Your </span>Tanker.
           </p>
-          <p className="font-display text-[40px] font-extrabold leading-[46px] tracking-[-1.4px]">
+          <p className="font-display text-[40px] font-extrabold leading-[55px] tracking-[-1.4px]">
             <span className="font-medium text-white/[0.78]">Your </span>Schedule.
           </p>
-          <p className="font-display text-[40px] font-extrabold leading-[46px] tracking-[-1.4px]">
+          <p className="font-display text-[40px] font-extrabold leading-[55px] tracking-[-1.4px]">
             <span className="font-medium text-white/[0.78]">Your </span>
-            <span className="rounded-[7px] bg-[#EAF0FF] px-[9px] py-[1px] text-primary">Money.</span>
+            <span className="rounded-[7px] bg-[#EAF0FF] px-[5px] py-[2px] text-primary">Money.</span>
           </p>
         </div>
 

@@ -42,7 +42,7 @@ export default function OrderPage() {
   const bottled = products.filter((p) => !isTankerProduct(p));
 
   const handleNext = () => {
-    if (!user) return router.push('/login?next=/order');
+    // No login gate — checkout creates the account from the contact details.
     if (cartCount === 0) return;
     if (!hasSlot) {
       // Items chosen but no slot yet — guide the eye to the picker instead of a dead button.

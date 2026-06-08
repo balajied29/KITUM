@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { activeAuthStore } from './store';
+import { activeAuthStore, useAuthStore } from './store';
 import { refreshAccessToken } from './auth';
 
 const api = axios.create({
@@ -22,7 +22,11 @@ api.interceptors.response.use(
   async (error) => {
     const original = error.config;
     const isAuthCall = original?.url?.includes('/auth/');
-    if (error.response?.status === 401 && original && !original._retry && !isAuthCall) {
+    // Only refresh/redirect when there's a REAL session to recover (a refresh token
+    // exists). Anonymous browsing gets a plain 401 the caller handles gracefully, so
+    // a not-signed-in customer is never bounced to /login.
+    const hasSession = !!activeAuthStore().getState().refreshToken;
+    if (error.response?.status === 401 && original && !original._retry && !isAuthCall && hasSession) {
       original._retry = true;
       try {
         const token = await refreshAccessToken();
@@ -42,6 +46,17 @@ api.interceptors.response.use(
 // Auth
 export const register        = (name, email, password, consent) => api.post('/auth/register', { name, email, password, consent });
 export const login           = (email, password)        => api.post('/auth/login',    { email, password });
+// Seamless guest session — create-or-resume a passwordless customer keyed by phone.
+export const quickAuth       = (name, phone)            => api.post('/auth/quick', { name, phone });
+// Ensure a customer session exists before a booking. If the user isn't signed in,
+// creates a guest account from their contact details and persists the session.
+export const ensureCustomerAuth = async (name, phone) => {
+  if (useAuthStore.getState().accessToken) return useAuthStore.getState().user;
+  const res = await quickAuth(name, phone);
+  const { user, accessToken, refreshToken } = res.data.data;
+  useAuthStore.getState().setAuth(user, accessToken, refreshToken);
+  return user;
+};
 export const getMe           = ()                       => api.get('/auth/me');
 export const updateProfile   = (data)                   => api.patch('/auth/me', data);
 export const deleteAccount   = ()                       => api.delete('/auth/me');

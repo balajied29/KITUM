@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { createOrder, getAddresses } from '@/lib/api';
+import { createOrder, getAddresses, ensureCustomerAuth } from '@/lib/api';
 import { useCartStore, useAuthStore, useLocationStore } from '@/lib/store';
 import { quote as priceQuote } from '@/lib/pricing';
 import { reverseGeocode } from '@/lib/maps';
@@ -30,14 +30,16 @@ export default function CheckoutPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState('');
 
-  // Guards: must be signed in, and must have something in the cart.
+  // No login gate — the account is created at place-order from the contact details.
+  // Only need something in the cart to check out.
   useEffect(() => {
-    if (!useAuthStore.getState().user) { router.replace('/login?next=/checkout'); return; }
     if (useCartStore.getState().items.length === 0) router.replace('/order');
   }, [router]);
 
   useEffect(() => { if (user) { setName(user.name || ''); setPhone(user.phone || ''); } }, [user]);
-  useEffect(() => { getAddresses().then((res) => setAddresses(res.data.data)).catch(() => {}); }, []);
+  useEffect(() => {
+    if (useAuthStore.getState().accessToken) getAddresses().then((res) => setAddresses(res.data.data)).catch(() => {});
+  }, []);
 
   const cartTotal = totalAmount();
   const slotId    = slot?._id ?? null;
@@ -78,6 +80,16 @@ export default function CheckoutPage() {
     if (!drop?.lat)         { setError('Please set your delivery location.'); return; }
     setError('');
     setLoading(true);
+
+    // Seamless auth: create (or resume) a guest account from the contact details if
+    // the customer isn't signed in, then place the order. No login screen.
+    try {
+      await ensureCustomerAuth(name.trim(), phone.trim());
+    } catch {
+      setError('Could not start your session. Please check your phone number and try again.');
+      setLoading(false);
+      return;
+    }
 
     // Nothing is charged now — payment is collected at delivery (cash, or UPI at
     // the door). Just create the order and go to its status screen.

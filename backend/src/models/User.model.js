@@ -115,9 +115,11 @@ const userSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
     },
+    // Optional: "guest" customers created seamlessly at first booking have no
+    // password (keyed by phone via a reserved guest email). login() already guards
+    // against passwordless accounts, so they can't be signed into with a password.
     password: {
       type: String,
-      required: true,
     },
     name: {
       type: String,

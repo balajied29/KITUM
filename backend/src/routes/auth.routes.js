@@ -2,6 +2,7 @@ const router = require('express').Router();
 const { body } = require('express-validator');
 const {
   register,
+  quick,
   login,
   refresh,
   logout,
@@ -34,6 +35,15 @@ router.post(
   body('password').notEmpty().withMessage('Password is required'),
   validate,
   login
+);
+
+// Seamless guest session for a customer's first booking (no password / no OTP).
+router.post(
+  '/quick',
+  authLimiter,
+  body('phone').trim().notEmpty().withMessage('Phone number is required'),
+  validate,
+  quick
 );
 
 // Rotation endpoint — not rate-limited as aggressively (a busy client refreshes often).
