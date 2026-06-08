@@ -1,5 +1,7 @@
 import '../styles/globals.css';
 import AppFrame from '@/components/AppFrame';
+import Analytics from '@/components/Analytics';
+import CookieConsent from '@/components/CookieConsent';
 
 export const metadata = {
   title: 'KitUm — Water delivered to your door',
@@ -36,6 +38,8 @@ export default function RootLayout({ children }) {
       </head>
       <body className="font-sans antialiased bg-[#e6e8ef] text-text-main">
         <AppFrame>{children}</AppFrame>
+        <CookieConsent />
+        <Analytics />
       </body>
     </html>
   );

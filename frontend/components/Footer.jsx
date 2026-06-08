@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { BUSINESS, LEGAL_LINKS } from '@/constants/business';
+import CookieSettingsButton from '@/components/CookieSettingsButton';
 
 /**
  * Site footer for customer-facing content pages (Home, Orders, Account).
@@ -48,6 +49,7 @@ export default function Footer() {
                 <Link href={l.href} className="text-sm text-text-body hover:text-primary transition-colors">{l.label}</Link>
               </li>
             ))}
+            <li><CookieSettingsButton /></li>
           </ul>
         </div>
       </div>
