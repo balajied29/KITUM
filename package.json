@@ -8,7 +8,8 @@
     "dev:fulfiller": "npm --prefix fulfiller run start",
     "start:frontend": "npm --prefix frontend run start",
     "start:backend": "npm --prefix backend run start",
-    "seed": "npm --prefix backend run seed:products && npm --prefix backend run seed:admin && npm --prefix backend run seed:fulfillers"
+    "seed": "npm --prefix backend run seed:products && npm --prefix backend run seed:admin && npm --prefix backend run seed:fulfillers",
+    "push:all": "bash scripts/push-all.sh"
   },
   "devDependencies": {
     "concurrently": "^9.0.0"
