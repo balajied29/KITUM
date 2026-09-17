@@ -6,6 +6,8 @@ import PlacesAutocomplete from '@/components/PlacesAutocomplete';
 
 const DEFAULT = { lat: 25.5788, lng: 91.8933 }; // Shillong
 const OSM_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+// See TrackMap.jsx — without a Referer OSM serves an "Access blocked" tile.
+const OSM_TILE_OPTS = { referrerPolicy: 'strict-origin-when-cross-origin' };
 const OSM_ATTR = '&copy; OpenStreetMap contributors';
 
 /**
@@ -55,7 +57,7 @@ export default function MapPicker({ initial, onConfirm, confirmLabel = 'Confirm 
           15
         );
         mapRef.current = map;
-        L.tileLayer(OSM_URL, { maxZoom: 19, attribution: OSM_ATTR }).addTo(map);
+        L.tileLayer(OSM_URL, { maxZoom: 19, attribution: OSM_ATTR, ...OSM_TILE_OPTS }).addTo(map);
         L.control.zoom({ position: 'bottomleft' }).addTo(map);
 
         map.on('movestart', () => setMoving(true));

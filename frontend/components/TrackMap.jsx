@@ -4,6 +4,11 @@ import { useEffect, useRef } from 'react';
 
 const OSM_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 const OSM_ATTR = '&copy; OpenStreetMap contributors';
+// OSM's tile usage policy requires each request to identify the app; a tile
+// request with no Referer gets a 403 "Access blocked" image instead of a map.
+// Setting the policy on the tile <img>s themselves sends the origin only,
+// whatever the page, WebView or browser extension decides about referrers.
+const OSM_TILE_OPTS = { referrerPolicy: 'strict-origin-when-cross-origin' };
 
 const dropIcon = (L) =>
   L.divIcon({
@@ -49,7 +54,7 @@ export default function TrackMap({ drop, tanker }) {
           14
         );
         mapRef.current = map;
-        L.tileLayer(OSM_URL, { maxZoom: 19, attribution: OSM_ATTR }).addTo(map);
+        L.tileLayer(OSM_URL, { maxZoom: 19, attribution: OSM_ATTR, ...OSM_TILE_OPTS }).addTo(map);
         L.marker([drop.lat, drop.lng], { icon: dropIcon(L) }).addTo(map);
         setTimeout(() => map.invalidateSize(), 200);
         if (typeof ResizeObserver !== 'undefined') {
